@@ -68,6 +68,12 @@ export function isValidPreset(v: unknown): v is RangePreset {
     ["today", "7d", "30d", "90d", "ytd", "all", "custom"].includes(v);
 }
 
+/** Returns YYYY-MM string for the primary month of the range — used for ad spend saving. */
+export function getPeriodKey(range: DateRange): string {
+  const d = range.start;
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+}
+
 export function formatRangeLabel(range: DateRange): string {
   if (range.preset !== "custom") {
     return PRESETS.find((p) => p.id === range.preset)?.label ?? "Last 30 days";

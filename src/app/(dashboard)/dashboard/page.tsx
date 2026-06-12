@@ -7,18 +7,16 @@ import { ConnectionHealthBanner } from "@/components/dashboard/ConnectionHealthB
 import { RevenueCards } from "@/components/dashboard/RevenueCards";
 import { CAPISignalHealth } from "@/components/dashboard/CAPISignalHealth";
 import { CampaignPerformanceTable } from "@/components/dashboard/CampaignPerformanceTable";
-import { AdSpendROAS } from "@/components/dashboard/AdSpendROAS";
 import { DateRangeFilter } from "@/components/dashboard/DateRangeFilter";
 import {
   fetchRoutingMetrics,
   fetchRevenueMetrics,
   fetchCAPIHealth,
   fetchCampaignPerformance,
-  fetchAdSpend,
   fetchOutOfAreaMetrics,
 } from "./data";
 import { FormlyPattern } from "@/components/brand/FormlyPattern";
-import { parseDateRangeParams } from "@/lib/dashboard/dateRange";
+import { parseDateRangeParams, getPeriodKey, formatRangeLabel } from "@/lib/dashboard/dateRange";
 
 export const revalidate = 0;
 
@@ -35,8 +33,10 @@ export default async function DashboardPage({ searchParams }: PageProps) {
 
   const accountId = user?.accountId ?? "";
   const dateRange = parseDateRangeParams(searchParams);
+  const periodKey = getPeriodKey(dateRange);
+  const rangeLabel = formatRangeLabel(dateRange);
 
-  const [routing, revenue, capiHealth, campaignPerf, adSpend, outOfArea] = await Promise.all([
+  const [routing, revenue, capiHealth, campaignPerf, outOfArea] = await Promise.all([
     accountId
       ? fetchRoutingMetrics(accountId, dateRange)
       : Promise.resolve({ leadsToday: 0, successToday: 0, successRate: 0, avgRoutingSec: 0 }),
@@ -45,7 +45,6 @@ export default async function DashboardPage({ searchParams }: PageProps) {
       : Promise.resolve({ totalRevenueThisMonth: 0, avgJobValue: 0, bookingRateThisMonth: 0, purchaseEvents30Days: 0 }),
     accountId ? fetchCAPIHealth(accountId, dateRange) : Promise.resolve([]),
     accountId ? fetchCampaignPerformance(accountId, dateRange) : Promise.resolve([]),
-    accountId ? fetchAdSpend(accountId) : Promise.resolve([]),
     accountId ? fetchOutOfAreaMetrics(accountId, dateRange) : Promise.resolve({ outOfAreaThisMonth: 0, outOfAreaPct: 0 }),
   ]);
 
@@ -84,11 +83,12 @@ export default async function DashboardPage({ searchParams }: PageProps) {
       {/* CAPI signal health */}
       <CAPISignalHealth rows={capiHealth} />
 
-      {/* Campaign performance */}
-      <CampaignPerformanceTable rows={campaignPerf} />
-
-      {/* Ad spend & ROAS */}
-      <AdSpendROAS initialRows={adSpend} />
+      {/* Campaign performance — includes summary cards, sortable table, inline ad spend, export */}
+      <CampaignPerformanceTable
+        rows={campaignPerf}
+        periodKey={periodKey}
+        rangeLabel={rangeLabel}
+      />
     </div>
   );
 }

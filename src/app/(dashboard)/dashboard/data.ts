@@ -36,13 +36,18 @@ export interface CAPIHealthRow {
 export interface CampaignPerfRow {
   id: string;
   name: string;
+  campaignStatus: string;
   leadsThisMonth: number;
   bookedJobs: number;
   bookingRate: number;
   totalRevenue: number;
   avgJobValue: number;
   capiEventsSent: number;
-  revenueTrend: number[]; // 7 days oldest→newest
+  adSpend: number;
+  roas: number | null;
+  leadTrend: number[]; // 7-day lead volume sparkline, oldest→newest
+  revenueTrend: number[]; // 7-day revenue sparkline, oldest→newest
+  dailyLeads: Array<{ date: string; count: number }>; // for export
 }
 
 export interface AdSpendMonth {
@@ -189,18 +194,15 @@ export async function fetchCampaignPerformance(
   range?: DateRange
 ): Promise<CampaignPerfRow[]> {
   const rangeStart = range?.start ?? monthStart();
-  const rangeEnd = range?.end;
+  const rangeEnd = range?.end ?? new Date();
   const ago7 = daysAgo(7);
 
-  const rangeFilter = {
-    gte: rangeStart,
-    ...(rangeEnd ? { lte: rangeEnd } : {}),
-  };
+  const rangeFilter = { gte: rangeStart, lte: rangeEnd };
 
-  const [campaigns, leadsRange, capiEvents] = await Promise.all([
+  const [campaigns, leadsRange, capiEvents, adSpends] = await Promise.all([
     db.campaign.findMany({
       where: { accountId, status: { not: "ARCHIVED" } },
-      select: { id: true, name: true },
+      select: { id: true, name: true, status: true },
       orderBy: { name: "asc" },
     }),
     db.lead.findMany({
@@ -211,12 +213,12 @@ export async function fetchCampaignPerformance(
       where: { status: "SENT", createdAt: rangeFilter, lead: { accountId } },
       select: { lead: { select: { campaignId: true } } },
     }),
+    db.monthlyAdSpend.findMany({
+      where: { campaign: { accountId }, month: { gte: rangeStart, lte: rangeEnd } },
+    }),
   ]);
 
-  // 7-day revenue leads for sparklines (always last 7 days regardless of filter)
-  const revenueLeads7d = leadsRange.filter(
-    (l) => l.invoiceValue && l.invoiceValue > 0 && l.createdAt >= ago7
-  );
+  const now = new Date();
 
   return campaigns.map((c) => {
     const leads = leadsRange.filter((l) => l.campaignId === c.id);
@@ -227,27 +229,56 @@ export async function fetchCampaignPerformance(
     const bookingRate = leads.length > 0 ? Math.round((booked / leads.length) * 100) : 0;
     const capiEventsSent = capiEvents.filter((e) => e.lead.campaignId === c.id).length;
 
-    // 7-day revenue trend
-    const now = new Date();
+    // Ad spend & ROAS
+    const campaignSpends = adSpends.filter((s) => s.campaignId === c.id);
+    const adSpend = campaignSpends.reduce((sum, s) => sum + s.spend, 0);
+    const roas = adSpend > 0 ? totalRevenue / adSpend : null;
+
+    // 7-day lead sparkline (always last 7 days, shows momentum)
+    const leadTrend = Array.from({ length: 7 }, (_, i) => {
+      const day = new Date(now.getTime() - (6 - i) * 86400_000);
+      const ds = new Date(day.getFullYear(), day.getMonth(), day.getDate());
+      const de = new Date(ds.getTime() + 86400_000);
+      return leads.filter((l) => l.createdAt >= ds && l.createdAt < de).length;
+    });
+
+    // 7-day revenue sparkline
+    const revenueLeads7d = leads.filter((l) => l.invoiceValue && l.invoiceValue > 0 && l.createdAt >= ago7);
     const revenueTrend = Array.from({ length: 7 }, (_, i) => {
-      const day = new Date(now.getTime() - (6 - i) * 24 * 60 * 60 * 1000);
+      const day = new Date(now.getTime() - (6 - i) * 86400_000);
       const ds = new Date(day.getFullYear(), day.getMonth(), day.getDate());
       const de = new Date(ds.getTime() + 86400_000);
       return revenueLeads7d
-        .filter((l) => l.campaignId === c.id && l.createdAt >= ds && l.createdAt < de)
+        .filter((l) => l.createdAt >= ds && l.createdAt < de)
         .reduce((s, l) => s + (l.invoiceValue ?? 0), 0);
     });
+
+    // Daily leads for CSV export
+    const dailyMap = new Map<string, number>();
+    for (const lead of leads) {
+      const d = lead.createdAt;
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+      dailyMap.set(key, (dailyMap.get(key) ?? 0) + 1);
+    }
+    const dailyLeads = Array.from(dailyMap.entries())
+      .map(([date, count]) => ({ date, count }))
+      .sort((a, b) => a.date.localeCompare(b.date));
 
     return {
       id: c.id,
       name: c.name,
+      campaignStatus: c.status,
       leadsThisMonth: leads.length,
       bookedJobs: booked,
       bookingRate,
       totalRevenue,
       avgJobValue,
       capiEventsSent,
+      adSpend,
+      roas,
+      leadTrend,
       revenueTrend,
+      dailyLeads,
     };
   });
 }
