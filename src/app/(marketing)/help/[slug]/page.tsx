@@ -1,14 +1,14 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
-import { getArticle, CATEGORIES, type Block } from "@/lib/help-content";
+import { getArticle, CATEGORIES, ARTICLES, type Block } from "@/lib/help-content";
+import { FormlyLogo } from "@/components/brand/FormlyLogo";
 import { cn } from "@/lib/utils";
 
 export const dynamic = "force-static";
 
 export function generateStaticParams() {
-  const { ARTICLES } = require("@/lib/help-content");
-  return ARTICLES.map((a: { slug: string }) => ({ slug: a.slug }));
+  return ARTICLES.map((a) => ({ slug: a.slug }));
 }
 
 function renderBlock(block: Block, idx: number) {
@@ -84,42 +84,58 @@ export default function ArticlePage({ params }: { params: { slug: string } }) {
   const category = CATEGORIES.find((c) => c.slug === article.categorySlug);
 
   return (
-    <div className="p-8 max-w-3xl mx-auto">
-      {/* Breadcrumb */}
-      <div className="flex items-center gap-1 text-xs text-gray-500 dark:text-[#8B90A0] mb-6">
-        <Link href="/help" className="hover:text-[#0F4C8F] dark:hover:text-[#3B7DD8] flex items-center gap-1">
-          <ChevronLeft className="size-3" />
-          Help Center
-        </Link>
-        {category && (
-          <>
-            <span>/</span>
-            <span>{category.label}</span>
-          </>
-        )}
-      </div>
+    <div className="min-h-screen bg-gray-50 dark:bg-[#0F1117]">
+      {/* Top nav */}
+      <header className="sticky top-0 z-10 border-b border-gray-200 dark:border-[#2A2D3E] bg-white/90 dark:bg-[#1A1D27]/90 backdrop-blur-sm">
+        <div className="mx-auto flex h-12 max-w-3xl items-center justify-between px-6">
+          <Link href="/">
+            <FormlyLogo size="sm" variant="dark" />
+          </Link>
+          <div className="flex items-center gap-4 text-xs text-gray-500 dark:text-[#8B90A0]">
+            <Link href="/dashboard" className="hover:text-gray-900 dark:hover:text-[#F0F4FF] transition-colors">
+              Dashboard →
+            </Link>
+          </div>
+        </div>
+      </header>
 
-      {/* Article header */}
-      <div className="mb-8 pb-6 border-b border-gray-200 dark:border-[#2A2D3E]">
-        <h1 className="text-xl font-semibold text-gray-900 dark:text-[#F0F4FF] mb-2">{article.title}</h1>
-        <p className="text-sm text-gray-500 dark:text-[#8B90A0]">{article.description}</p>
-      </div>
+      <div className="p-8 max-w-3xl mx-auto">
+        {/* Breadcrumb */}
+        <div className="flex items-center gap-1 text-xs text-gray-500 dark:text-[#8B90A0] mb-6">
+          <Link href="/help" className="hover:text-[#0F4C8F] dark:hover:text-[#3B7DD8] flex items-center gap-1">
+            <ChevronLeft className="size-3" />
+            Help Center
+          </Link>
+          {category && (
+            <>
+              <span>/</span>
+              <span>{category.label}</span>
+            </>
+          )}
+        </div>
 
-      {/* Article content */}
-      <div>{article.content.map((block, idx) => renderBlock(block, idx))}</div>
+        {/* Article header */}
+        <div className="mb-8 pb-6 border-b border-gray-200 dark:border-[#2A2D3E]">
+          <h1 className="text-xl font-semibold text-gray-900 dark:text-[#F0F4FF] mb-2">{article.title}</h1>
+          <p className="text-sm text-gray-500 dark:text-[#8B90A0]">{article.description}</p>
+        </div>
 
-      {/* Footer CTA */}
-      <div className="mt-12 rounded-xl border border-gray-200 dark:border-[#2A2D3E] bg-gray-50 dark:bg-[#1A1D27] px-5 py-4 text-center">
-        <p className="text-sm font-medium text-gray-900 dark:text-[#F0F4FF] mb-1">Still have questions?</p>
-        <p className="text-xs text-gray-500 dark:text-[#8B90A0] mb-3">
-          Our team typically responds within 24 hours.
-        </p>
-        <Link
-          href="/help"
-          className="inline-flex items-center gap-2 rounded-lg bg-[#0F4C8F] dark:bg-[#3B7DD8] px-4 py-2 text-sm font-medium text-white hover:opacity-90"
-        >
-          Contact support
-        </Link>
+        {/* Article content */}
+        <div>{article.content.map((block, idx) => renderBlock(block, idx))}</div>
+
+        {/* Footer CTA */}
+        <div className="mt-12 rounded-xl border border-gray-200 dark:border-[#2A2D3E] bg-gray-50 dark:bg-[#1A1D27] px-5 py-4 text-center">
+          <p className="text-sm font-medium text-gray-900 dark:text-[#F0F4FF] mb-1">Still have questions?</p>
+          <p className="text-xs text-gray-500 dark:text-[#8B90A0] mb-3">
+            Our team typically responds within 24 hours.
+          </p>
+          <Link
+            href="/help"
+            className="inline-flex items-center gap-2 rounded-lg bg-[#0F4C8F] dark:bg-[#3B7DD8] px-4 py-2 text-sm font-medium text-white hover:opacity-90"
+          >
+            Contact support
+          </Link>
+        </div>
       </div>
     </div>
   );

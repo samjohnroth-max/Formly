@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import { CATEGORIES, ARTICLES } from "@/lib/help-content";
 import { ContactSupportModal } from "@/components/help/ContactSupportModal";
+import { FormlyLogo } from "@/components/brand/FormlyLogo";
 import { cn } from "@/lib/utils";
 import { formatDistanceToNow } from "date-fns";
 
@@ -37,8 +38,9 @@ export default function HelpPage() {
 
   useEffect(() => {
     fetch("/api/support")
-      .then((r) => r.json())
+      .then((r) => r.ok ? r.json() : { tickets: [] })
       .then((d) => setTickets(d.tickets ?? []))
+      .catch(() => setTickets([]))
       .finally(() => setTicketsLoading(false));
   }, [showModal]);
 
@@ -52,7 +54,21 @@ export default function HelpPage() {
     : null;
 
   return (
-    <>
+    <div className="min-h-screen bg-gray-50 dark:bg-[#0F1117]">
+      {/* Top nav */}
+      <header className="sticky top-0 z-10 border-b border-gray-200 dark:border-[#2A2D3E] bg-white/90 dark:bg-[#1A1D27]/90 backdrop-blur-sm">
+        <div className="mx-auto flex h-12 max-w-4xl items-center justify-between px-6">
+          <Link href="/">
+            <FormlyLogo size="sm" variant="dark" />
+          </Link>
+          <div className="flex items-center gap-4 text-xs text-gray-500 dark:text-[#8B90A0]">
+            <Link href="/dashboard" className="hover:text-gray-900 dark:hover:text-[#F0F4FF] transition-colors">
+              Dashboard →
+            </Link>
+          </div>
+        </div>
+      </header>
+
       <div className="p-8 max-w-4xl mx-auto">
         {/* Header */}
         <div className="mb-8">
@@ -156,52 +172,52 @@ export default function HelpPage() {
           </div>
         )}
 
-        {/* Support ticket history */}
-        <div className="mt-12 border-t border-gray-200 dark:border-[#2A2D3E] pt-8">
-          <h2 className="text-sm font-semibold text-gray-900 dark:text-[#F0F4FF] mb-4">Your support tickets</h2>
-          {ticketsLoading ? (
-            <p className="text-sm text-gray-400 dark:text-[#8B90A0]">Loading…</p>
-          ) : tickets.length === 0 ? (
-            <p className="text-sm text-gray-400 dark:text-[#8B90A0]">No tickets yet.</p>
-          ) : (
-            <div className="space-y-2">
-              {tickets.map((t) => (
-                <div
-                  key={t.id}
-                  className="flex items-center justify-between gap-4 rounded-xl border border-gray-200 dark:border-[#2A2D3E] bg-white dark:bg-[#1A1D27] px-4 py-3"
-                >
-                  <div className="min-w-0">
-                    <p className="text-sm font-medium text-gray-900 dark:text-[#F0F4FF] truncate">{t.subject}</p>
-                    <div className="flex items-center gap-2 mt-0.5">
-                      <span className="text-xs text-gray-400 dark:text-[#8B90A0]">{t.category}</span>
-                      <span className="text-gray-300 dark:text-[#2A2D3E]">·</span>
-                      <span className="flex items-center gap-1 text-xs text-gray-400 dark:text-[#8B90A0]">
-                        <Clock className="size-3" />
-                        {formatDistanceToNow(new Date(t.createdAt), { addSuffix: true })}
-                      </span>
+        {/* Support ticket history — only shown when signed in */}
+        {tickets.length > 0 && (
+          <div className="mt-12 border-t border-gray-200 dark:border-[#2A2D3E] pt-8">
+            <h2 className="text-sm font-semibold text-gray-900 dark:text-[#F0F4FF] mb-4">Your support tickets</h2>
+            {ticketsLoading ? (
+              <p className="text-sm text-gray-400 dark:text-[#8B90A0]">Loading…</p>
+            ) : (
+              <div className="space-y-2">
+                {tickets.map((t) => (
+                  <div
+                    key={t.id}
+                    className="flex items-center justify-between gap-4 rounded-xl border border-gray-200 dark:border-[#2A2D3E] bg-white dark:bg-[#1A1D27] px-4 py-3"
+                  >
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-gray-900 dark:text-[#F0F4FF] truncate">{t.subject}</p>
+                      <div className="flex items-center gap-2 mt-0.5">
+                        <span className="text-xs text-gray-400 dark:text-[#8B90A0]">{t.category}</span>
+                        <span className="text-gray-300 dark:text-[#2A2D3E]">·</span>
+                        <span className="flex items-center gap-1 text-xs text-gray-400 dark:text-[#8B90A0]">
+                          <Clock className="size-3" />
+                          {formatDistanceToNow(new Date(t.createdAt), { addSuffix: true })}
+                        </span>
+                      </div>
                     </div>
+                    <span className={cn("shrink-0 inline-flex rounded-full px-2 py-0.5 text-xs font-medium", STATUS_COLOR[t.status] ?? STATUS_COLOR.OPEN)}>
+                      {t.status.replace("_", " ")}
+                    </span>
                   </div>
-                  <span className={cn("shrink-0 inline-flex rounded-full px-2 py-0.5 text-xs font-medium", STATUS_COLOR[t.status] ?? STATUS_COLOR.OPEN)}>
-                    {t.status.replace("_", " ")}
-                  </span>
-                </div>
-              ))}
-            </div>
-          )}
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Footer */}
+        <div className="mt-12 border-t border-gray-200 dark:border-[#2A2D3E] pt-6 flex items-center justify-between">
+          <p className="text-xs text-gray-400 dark:text-[#8B90A0]">© {new Date().getFullYear()} Formly</p>
+          <div className="flex items-center gap-4 text-xs text-gray-400 dark:text-[#8B90A0]">
+            <Link href="/terms" className="hover:text-gray-600 dark:hover:text-[#F0F4FF] transition-colors">Terms</Link>
+            <Link href="/privacy" className="hover:text-gray-600 dark:hover:text-[#F0F4FF] transition-colors">Privacy</Link>
+            <a href="mailto:support@formly.app" className="hover:text-gray-600 dark:hover:text-[#F0F4FF] transition-colors">support@formly.app</a>
+          </div>
         </div>
       </div>
 
       {showModal && <ContactSupportModal onClose={() => setShowModal(false)} />}
-
-      {/* Footer */}
-      <div className="mt-12 border-t border-gray-200 dark:border-[#2A2D3E] pt-6 flex items-center justify-between">
-        <p className="text-xs text-gray-400 dark:text-[#8B90A0]">© {new Date().getFullYear()} Formly</p>
-        <div className="flex items-center gap-4 text-xs text-gray-400 dark:text-[#8B90A0]">
-          <Link href="/terms" className="hover:text-gray-600 dark:hover:text-[#F0F4FF] transition-colors">Terms</Link>
-          <Link href="/privacy" className="hover:text-gray-600 dark:hover:text-[#F0F4FF] transition-colors">Privacy</Link>
-          <a href="mailto:support@formly.app" className="hover:text-gray-600 dark:hover:text-[#F0F4FF] transition-colors">support@formly.app</a>
-        </div>
-      </div>
-    </>
+    </div>
   );
 }

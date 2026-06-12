@@ -1,10 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getRequiredSession } from "@/lib/auth/session";
+import { getSession } from "@/lib/auth/session";
 import { db } from "@/lib/db";
 import { emailService } from "@/lib/email";
 
 export async function POST(req: NextRequest) {
-  const session = await getRequiredSession();
+  const session = await getSession();
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: "Sign in to submit a support ticket." }, { status: 401 });
+  }
+
   const user = await db.user.findUnique({
     where: { id: session.user.id },
     select: { accountId: true, name: true, email: true },
@@ -59,7 +63,12 @@ export async function POST(req: NextRequest) {
 }
 
 export async function GET() {
-  const session = await getRequiredSession();
+  const session = await getSession();
+  if (!session?.user?.id) {
+    // Public access — return empty ticket list (no redirect)
+    return NextResponse.json({ tickets: [] });
+  }
+
   const user = await db.user.findUnique({
     where: { id: session.user.id },
     select: { accountId: true },

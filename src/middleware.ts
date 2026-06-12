@@ -18,6 +18,7 @@ const PUBLIC_PATHS = [
   "/terms",
   "/api/auth",
   "/api/data-deletion",
+  "/api/support",
   // OAuth callback must not be intercepted — code+state params would be lost on a
   // middleware→login redirect. The route itself calls getRequiredSession() for auth.
   "/api/integrations/meta/callback",
