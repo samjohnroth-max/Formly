@@ -11,8 +11,14 @@ async function getAccountId(userId: string): Promise<string> {
   return user.accountId;
 }
 
+async function assertNotDemo(userId: string): Promise<void> {
+  const u = await db.user.findUnique({ where: { id: userId }, select: { email: true } });
+  if (u?.email === "demo@formly.io") throw new Error("This action is disabled in demo mode.");
+}
+
 export async function disconnectMeta(connectionId: string) {
   const session = await getRequiredSession();
+  await assertNotDemo(session.user.id);
   const accountId = await getAccountId(session.user.id);
 
   await db.metaConnection.updateMany({
@@ -25,6 +31,7 @@ export async function disconnectMeta(connectionId: string) {
 
 export async function disconnectST(connectionId: string) {
   const session = await getRequiredSession();
+  await assertNotDemo(session.user.id);
   const accountId = await getAccountId(session.user.id);
 
   await db.sTConnection.updateMany({

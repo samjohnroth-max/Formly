@@ -24,6 +24,8 @@ export default async function SettingsPage() {
     })(),
   ]);
 
+  const isDemo = session.user?.email === "demo@formly.io";
+
   return (
     <div className="mx-auto max-w-2xl p-8 space-y-6">
       <h1 className="text-xl font-semibold text-gray-900 dark:text-[#F0F4FF]">Settings</h1>
@@ -65,7 +67,7 @@ export default async function SettingsPage() {
         <h2 className="text-sm font-semibold text-gray-900 dark:text-[#F0F4FF] mb-1">Change password</h2>
         <p className="text-xs text-gray-500 dark:text-[#8B90A0] mb-5">You must enter your current password to set a new one.</p>
         <div className="max-w-sm">
-          <ChangePasswordForm />
+          <ChangePasswordForm isDemo={isDemo} />
         </div>
       </div>
 

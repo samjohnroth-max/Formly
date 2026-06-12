@@ -2,7 +2,15 @@
 
 import { useState } from "react";
 
-export function ChangePasswordForm() {
+export function ChangePasswordForm({ isDemo = false }: { isDemo?: boolean }) {
+  if (isDemo) {
+    return (
+      <div className="rounded-lg bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30 px-4 py-3 text-sm text-amber-800 dark:text-amber-300">
+        Password changes are disabled in demo mode.{" "}
+        <a href="/signup" className="underline font-medium">Sign up free</a> to manage your own account.
+      </div>
+    );
+  }
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");

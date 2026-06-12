@@ -4,6 +4,8 @@ import { signOut } from "@/lib/auth";
 import { LayoutDashboard, Link2, Megaphone, Users, Mail, Settings, LogOut, HelpCircle } from "lucide-react";
 import { ThemeToggle } from "@/components/layout/ThemeToggle";
 import { FormlyLogo } from "@/components/brand/FormlyLogo";
+import { DemoProvider } from "@/components/demo/DemoContext";
+import { DemoBanner } from "@/components/demo/DemoBanner";
 
 const NAV = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -16,62 +18,77 @@ const NAV = [
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const session = await getRequiredSession();
+  const isDemo = session.user?.email === "demo@formly.io";
 
   return (
-    <div className="flex h-screen bg-gray-50 dark:bg-[#0F1117]">
-      {/* Sidebar */}
-      <aside className="flex w-56 shrink-0 flex-col border-r border-gray-200 dark:border-[#2A2D3E] bg-gradient-to-b from-[#EEF4FF] to-white dark:from-[#1E2D4A] dark:to-[#1A1D27]">
-        <div className="flex h-14 items-center justify-between border-b border-gray-200 dark:border-[#2A2D3E] px-5">
-          <FormlyLogo size="sm" variant="dark" />
-          <ThemeToggle />
+    <DemoProvider isDemo={isDemo}>
+      <div className="flex flex-col h-screen bg-gray-50 dark:bg-[#0F1117]">
+        {/* Demo banner (hidden for non-demo users) */}
+        <DemoBanner />
+
+        <div className="flex flex-1 min-h-0">
+          {/* Sidebar */}
+          <aside className="flex w-56 shrink-0 flex-col border-r border-gray-200 dark:border-[#2A2D3E] bg-gradient-to-b from-[#EEF4FF] to-white dark:from-[#1E2D4A] dark:to-[#1A1D27]">
+            <div className="flex h-14 items-center justify-between border-b border-gray-200 dark:border-[#2A2D3E] px-5">
+              <FormlyLogo size="sm" variant="dark" />
+              <ThemeToggle />
+            </div>
+
+            <nav className="flex-1 space-y-0.5 p-3">
+              {NAV.map(({ href, label, icon: Icon }) => (
+                <Link
+                  key={href}
+                  href={href}
+                  className="flex items-center gap-2.5 rounded-md px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-[#8B90A0] dark:hover:bg-white/10 dark:hover:text-[#F0F4FF] transition-colors"
+                >
+                  <Icon className="size-4 shrink-0" />
+                  {label}
+                </Link>
+              ))}
+            </nav>
+
+            <div className="border-t border-gray-200 dark:border-[#2A2D3E] p-3">
+              <Link
+                href="/help"
+                className="flex items-center gap-2.5 rounded-md px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-[#8B90A0] dark:hover:bg-white/10 dark:hover:text-[#F0F4FF] transition-colors mb-1"
+              >
+                <HelpCircle className="size-4 shrink-0" />
+                Help
+              </Link>
+              <div className="mb-2 px-3 py-1">
+                <div className="flex items-center gap-1.5">
+                  <p className="truncate text-xs font-medium text-gray-900 dark:text-[#F0F4FF]">
+                    {session.user?.name ?? "Account"}
+                  </p>
+                  {isDemo && (
+                    <span className="shrink-0 inline-flex rounded-sm bg-amber-400 px-1 py-0.5 text-[9px] font-bold uppercase tracking-wide text-amber-900 leading-none">
+                      DEMO
+                    </span>
+                  )}
+                </div>
+                <p className="truncate text-xs text-gray-500 dark:text-[#8B90A0]">{session.user?.email}</p>
+              </div>
+              <form
+                action={async () => {
+                  "use server";
+                  await signOut({ redirectTo: "/login" });
+                }}
+              >
+                <button
+                  type="submit"
+                  className="flex w-full items-center gap-2.5 rounded-md px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-[#8B90A0] dark:hover:bg-white/10 dark:hover:text-[#F0F4FF] transition-colors"
+                >
+                  <LogOut className="size-4 shrink-0" />
+                  Sign out
+                </button>
+              </form>
+            </div>
+          </aside>
+
+          {/* Main content */}
+          <main className="flex-1 overflow-y-auto">{children}</main>
         </div>
-
-        <nav className="flex-1 space-y-0.5 p-3">
-          {NAV.map(({ href, label, icon: Icon }) => (
-            <Link
-              key={href}
-              href={href}
-              className="flex items-center gap-2.5 rounded-md px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-[#8B90A0] dark:hover:bg-white/10 dark:hover:text-[#F0F4FF] transition-colors"
-            >
-              <Icon className="size-4 shrink-0" />
-              {label}
-            </Link>
-          ))}
-        </nav>
-
-        <div className="border-t border-gray-200 dark:border-[#2A2D3E] p-3">
-          <Link
-            href="/help"
-            className="flex items-center gap-2.5 rounded-md px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-[#8B90A0] dark:hover:bg-white/10 dark:hover:text-[#F0F4FF] transition-colors mb-1"
-          >
-            <HelpCircle className="size-4 shrink-0" />
-            Help
-          </Link>
-          <div className="mb-2 px-3 py-1">
-            <p className="truncate text-xs font-medium text-gray-900 dark:text-[#F0F4FF]">
-              {session.user?.name ?? "Account"}
-            </p>
-            <p className="truncate text-xs text-gray-500 dark:text-[#8B90A0]">{session.user?.email}</p>
-          </div>
-          <form
-            action={async () => {
-              "use server";
-              await signOut({ redirectTo: "/login" });
-            }}
-          >
-            <button
-              type="submit"
-              className="flex w-full items-center gap-2.5 rounded-md px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-[#8B90A0] dark:hover:bg-white/10 dark:hover:text-[#F0F4FF] transition-colors"
-            >
-              <LogOut className="size-4 shrink-0" />
-              Sign out
-            </button>
-          </form>
-        </div>
-      </aside>
-
-      {/* Main content */}
-      <main className="flex-1 overflow-y-auto">{children}</main>
-    </div>
+      </div>
+    </DemoProvider>
   );
 }

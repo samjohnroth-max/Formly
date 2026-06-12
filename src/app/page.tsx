@@ -81,10 +81,10 @@ function Hero() {
             Start free trial <ArrowRight className="size-4" />
           </Link>
           <Link
-            href="/login"
+            href="/demo"
             className="flex items-center gap-2 rounded-full border border-gray-700 px-8 py-3.5 text-sm font-semibold text-gray-300 hover:border-gray-500 hover:text-white transition-colors"
           >
-            Sign in to dashboard
+            See a live demo →
           </Link>
         </div>
 
