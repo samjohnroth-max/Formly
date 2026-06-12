@@ -5,6 +5,7 @@ import { signIn } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Suspense } from "react";
+import { FormlyLogo } from "@/components/brand/FormlyLogo";
 
 function LoginForm() {
   const router = useRouter();
@@ -44,7 +45,9 @@ function LoginForm() {
     <main className="min-h-screen flex items-center justify-center bg-gray-50">
       <div className="w-full max-w-md px-4">
         <div className="mb-8 text-center">
-          <h1 className="text-3xl font-bold text-[#0F4C8F]">Formly</h1>
+          <div className="flex justify-center">
+            <FormlyLogo size="md" variant="default" />
+          </div>
           <p className="mt-2 text-sm text-gray-500">Sign in to your account</p>
         </div>
 

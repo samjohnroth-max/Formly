@@ -3,6 +3,7 @@ import { getRequiredSession } from "@/lib/auth/session";
 import { signOut } from "@/lib/auth";
 import { LayoutDashboard, Link2, Megaphone, Users, Mail, Settings, LogOut, HelpCircle } from "lucide-react";
 import { ThemeToggle } from "@/components/layout/ThemeToggle";
+import { FormlyLogo } from "@/components/brand/FormlyLogo";
 
 const NAV = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -21,7 +22,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
       {/* Sidebar */}
       <aside className="flex w-56 shrink-0 flex-col border-r border-gray-200 dark:border-[#2A2D3E] bg-gradient-to-b from-[#EEF4FF] to-white dark:from-[#1E2D4A] dark:to-[#1A1D27]">
         <div className="flex h-14 items-center justify-between border-b border-gray-200 dark:border-[#2A2D3E] px-5">
-          <span className="text-base font-bold text-[#0F4C8F] dark:text-[#3B7DD8]">Formly</span>
+          <FormlyLogo size="sm" variant="dark" />
           <ThemeToggle />
         </div>
 

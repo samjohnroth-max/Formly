@@ -15,6 +15,7 @@ import {
   fetchAdSpend,
   fetchOutOfAreaMetrics,
 } from "./data";
+import { FormlyPattern } from "@/components/brand/FormlyPattern";
 
 export const revalidate = 0;
 
@@ -38,7 +39,14 @@ export default async function DashboardPage() {
 
   return (
     <div className="space-y-8 p-8">
-      <h1 className="text-xl font-semibold text-gray-900 dark:text-[#F0F4FF]">Dashboard</h1>
+      {/* Branded header strip */}
+      <div className="relative overflow-hidden rounded-xl bg-gradient-to-r from-[#0F4C8F] to-[#1a5fad] px-6 py-4">
+        <FormlyPattern color="#ffffff" opacity={0.06} spacing={36} />
+        <div className="relative">
+          <h1 className="text-base font-semibold text-white">Dashboard</h1>
+          <p className="text-xs text-blue-200 mt-0.5">Real-time lead routing and CAPI performance</p>
+        </div>
+      </div>
 
       {/* Connection health warning */}
       <ConnectionHealthBanner />

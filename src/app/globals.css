@@ -1,3 +1,4 @@
+@import url('../styles/brand.css');
 @tailwind base;
 @tailwind components;
 @tailwind utilities;

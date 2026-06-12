@@ -1,0 +1,30 @@
+/* Formly brand colors */
+:root {
+  --formly-navy: #0F4C8F;
+  --formly-navy-light: #1a5fad;
+  --formly-navy-dark: #0a3464;
+  --formly-blue: #3B7DD8;
+  --formly-blue-light: #5c96e8;
+  --formly-sky: #4A90E2;
+  --formly-ink: #0A1628;
+  --formly-mist: #EEF4FF;
+
+  /* Dark-mode surfaces */
+  --formly-surface-dark: #1A1D27;
+  --formly-bg-dark: #0F1117;
+  --formly-border-dark: #2A2D3E;
+  --formly-sidebar-dark-from: #1E2D4A;
+  --formly-sidebar-dark-to: #1A1D27;
+  --formly-text-dark: #F0F4FF;
+  --formly-muted-dark: #8B90A0;
+
+  /* Semantic aliases */
+  --color-brand: var(--formly-navy);
+  --color-brand-accent: var(--formly-blue);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-brand: var(--formly-blue);
+  }
+}

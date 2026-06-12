@@ -4,6 +4,7 @@ import { useState } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { FormlyLogo } from "@/components/brand/FormlyLogo";
 
 export default function SignupPage() {
   const router = useRouter();
@@ -64,7 +65,9 @@ export default function SignupPage() {
     <main className="min-h-screen flex items-center justify-center bg-gray-50">
       <div className="w-full max-w-md px-4">
         <div className="mb-8 text-center">
-          <h1 className="text-3xl font-bold text-[#0F4C8F]">Formly</h1>
+          <div className="flex justify-center">
+            <FormlyLogo size="md" variant="default" />
+          </div>
           <p className="mt-2 text-sm text-gray-500">Create your account</p>
         </div>
 

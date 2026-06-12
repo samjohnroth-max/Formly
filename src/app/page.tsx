@@ -5,6 +5,8 @@ import {
 } from "lucide-react";
 import { DotGrid } from "@/components/ui/DotGrid";
 import { FlowGraphic } from "@/components/ui/FlowGraphic";
+import { FormlyLogo } from "@/components/brand/FormlyLogo";
+import { FormlyPattern } from "@/components/brand/FormlyPattern";
 
 // ─── Nav ─────────────────────────────────────────────────────────────────────
 
@@ -12,7 +14,7 @@ function Nav() {
   return (
     <header className="fixed top-0 inset-x-0 z-50 border-b border-white/10 bg-gray-950/80 backdrop-blur-md">
       <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-6">
-        <span className="text-base font-bold tracking-tight text-white">Formly</span>
+        <FormlyLogo size="sm" variant="white" />
         <nav className="hidden items-center gap-6 text-sm font-medium text-gray-400 sm:flex">
           <a href="#how-it-works" className="hover:text-white transition-colors">How it works</a>
           <a href="#features" className="hover:text-white transition-colors">Features</a>
@@ -41,6 +43,8 @@ function Hero() {
     <section className="relative overflow-hidden bg-gray-950 pt-32 pb-24">
       {/* Dot grid pattern */}
       <DotGrid dotColor="#ffffff" dotOpacity={0.03} spacing={24} radius={1.5} />
+      {/* Formly mark pattern overlay */}
+      <FormlyPattern color="#ffffff" opacity={0.03} spacing={48} />
 
       {/* Glow */}
       <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
@@ -48,6 +52,11 @@ function Hero() {
       </div>
 
       <div className="relative mx-auto max-w-4xl px-6 text-center">
+        {/* Brand wordmark */}
+        <div className="flex justify-center mb-8">
+          <FormlyLogo size="xl" variant="white" />
+        </div>
+
         <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-blue-500/30 bg-blue-500/10 px-4 py-1.5 text-xs font-medium text-blue-400">
           <Zap className="size-3" />
           Meta Instant Forms → ServiceTitan · Real-time
@@ -452,7 +461,7 @@ function Footer() {
     <footer className="border-t border-gray-800 bg-gray-950 py-10">
       <div className="mx-auto max-w-5xl px-6">
         <div className="flex flex-col items-center justify-between gap-4 sm:flex-row">
-          <span className="text-sm font-bold text-white">Formly</span>
+          <FormlyLogo size="sm" variant="white" />
           <div className="flex items-center gap-6 text-xs text-gray-500">
             <Link href="/login" className="hover:text-gray-300 transition-colors">Sign in</Link>
             <Link href="/signup" className="hover:text-gray-300 transition-colors">Sign up</Link>

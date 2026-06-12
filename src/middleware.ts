@@ -12,6 +12,7 @@ const PUBLIC_PATHS = [
   "/forgot-password",
   "/reset-password",
   "/auth-error",
+  "/help",
   "/api/auth",
   // OAuth callback must not be intercepted — code+state params would be lost on a
   // middleware→login redirect. The route itself calls getRequiredSession() for auth.
