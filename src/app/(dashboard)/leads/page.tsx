@@ -5,6 +5,7 @@ import { getRequiredSession } from "@/lib/auth/session";
 import { db } from "@/lib/db";
 import { RoutingStatusBadge } from "@/components/leads/RoutingStatusBadge";
 import { ExportButton } from "@/components/leads/ExportButton";
+import { haversineDistance } from "@/lib/geo";
 import type { RoutingStatus, DestinationType } from "@/types/db";
 import { cn } from "@/lib/utils";
 
@@ -24,13 +25,15 @@ interface LeadRow {
   phone: string | null;
   routingStatus: RoutingStatus;
   createdAt: Date;
+  lat: number | null;
+  lng: number | null;
   campaign: { name: string; destinationType: DestinationType } | null;
 }
 
 export default async function LeadsPage({
   searchParams,
 }: {
-  searchParams: { status?: string; page?: string };
+  searchParams: { status?: string; page?: string; area?: string };
 }) {
   const session = await getRequiredSession();
   const user = await db.user.findUnique({
@@ -41,13 +44,18 @@ export default async function LeadsPage({
   const page = Math.max(1, parseInt(searchParams.page ?? "1", 10));
   const pageSize = 50;
   const statusFilter = searchParams.status;
+  const areaFilter = searchParams.area; // "out" | undefined
+
+  const serviceArea = user?.accountId
+    ? await db.serviceArea.findUnique({ where: { accountId: user.accountId } })
+    : null;
 
   const where = {
     accountId: user?.accountId ?? "none",
     ...(statusFilter ? { routingStatus: statusFilter as never } : {}),
   };
 
-  const [leads, total] = user?.accountId
+  const [allLeads, total] = user?.accountId
     ? await Promise.all([
         db.lead.findMany({
           where,
@@ -59,6 +67,8 @@ export default async function LeadsPage({
             phone: true,
             routingStatus: true,
             createdAt: true,
+            lat: true,
+            lng: true,
             campaign: { select: { name: true, destinationType: true } },
           },
           orderBy: { createdAt: "desc" },
@@ -69,14 +79,32 @@ export default async function LeadsPage({
       ])
     : [[], 0];
 
-  const statuses: Array<{ value: string; label: string }> = [
-    { value: "", label: "All" },
-    { value: "SUCCESS", label: "Success" },
-    { value: "PROCESSING", label: "Processing" },
-    { value: "RETRY", label: "Retrying" },
-    { value: "FAILED", label: "Failed" },
-    { value: "PENDING", label: "Pending" },
+  // Compute inServiceArea per lead
+  const leads = allLeads.map((l) => {
+    let inServiceArea: boolean | null = null;
+    if (serviceArea && l.lat != null && l.lng != null) {
+      const dist = haversineDistance(serviceArea.lat, serviceArea.lng, l.lat, l.lng);
+      inServiceArea = dist <= serviceArea.radiusMiles;
+    }
+    return { ...l, inServiceArea };
+  });
+
+  // Apply area filter client-side (already loaded the page)
+  const filteredLeads = areaFilter === "out"
+    ? leads.filter((l) => l.inServiceArea === false)
+    : leads;
+
+  const statuses: Array<{ value: string; label: string; href: string }> = [
+    { value: "", label: "All", href: "/leads" },
+    { value: "SUCCESS", label: "Success", href: "/leads?status=SUCCESS" },
+    { value: "PROCESSING", label: "Processing", href: "/leads?status=PROCESSING" },
+    { value: "RETRY", label: "Retrying", href: "/leads?status=RETRY" },
+    { value: "FAILED", label: "Failed", href: "/leads?status=FAILED" },
+    { value: "PENDING", label: "Pending", href: "/leads?status=PENDING" },
+    ...(serviceArea ? [{ value: "out_area", label: "Out of area", href: "/leads?area=out" }] : []),
   ];
+
+  const activeFilter = areaFilter === "out" ? "out_area" : (statusFilter ?? "");
 
   return (
     <div className="p-8">
@@ -93,12 +121,14 @@ export default async function LeadsPage({
             {statuses.map((s) => (
               <Link
                 key={s.value}
-                href={s.value ? `/leads?status=${s.value}` : "/leads"}
+                href={s.href}
                 className={cn(
                   "rounded-md px-3 py-1.5 text-xs font-medium transition-colors",
-                  (statusFilter ?? "") === s.value
+                  activeFilter === s.value
                     ? "bg-white dark:bg-[#2A2D3E] text-gray-900 dark:text-[#F0F4FF] shadow-sm"
-                    : "text-gray-500 dark:text-[#8B90A0] hover:text-gray-700 dark:hover:text-[#F0F4FF]"
+                    : s.value === "out_area"
+                      ? "text-rose-500 hover:text-rose-700 dark:text-rose-400 dark:hover:text-rose-300"
+                      : "text-gray-500 dark:text-[#8B90A0] hover:text-gray-700 dark:hover:text-[#F0F4FF]"
                 )}
               >
                 {s.label}
@@ -108,11 +138,11 @@ export default async function LeadsPage({
         </div>
       </div>
 
-      {leads.length === 0 ? (
+      {filteredLeads.length === 0 ? (
         <div className="rounded-xl border border-dashed border-gray-300 dark:border-[#2A2D3E] bg-gray-50 dark:bg-[#1A1D27] py-16 text-center">
-          <p className="text-sm font-medium text-gray-900 dark:text-[#F0F4FF]">No leads yet</p>
+          <p className="text-sm font-medium text-gray-900 dark:text-[#F0F4FF]">No leads found</p>
           <p className="mt-1 text-sm text-gray-500 dark:text-[#8B90A0]">
-            Leads appear here when Meta sends webhook events for your active campaigns.
+            {areaFilter === "out" ? "No out-of-area leads on this page." : "Leads appear here when Meta sends webhook events for your active campaigns."}
           </p>
         </div>
       ) : (
@@ -125,11 +155,14 @@ export default async function LeadsPage({
                   <th className="px-3 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-[#8B90A0]">Campaign</th>
                   <th className="px-3 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-[#8B90A0]">Type</th>
                   <th className="px-3 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-[#8B90A0]">Status</th>
+                  {serviceArea && (
+                    <th className="px-3 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-[#8B90A0]">Area</th>
+                  )}
                   <th className="px-3 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-[#8B90A0]">Received</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 dark:divide-[#2A2D3E]">
-                {leads.map((lead) => {
+                {filteredLeads.map((lead) => {
                   const name = [lead.firstName, lead.lastName].filter(Boolean).join(" ") || "Unknown";
                   const dest = lead.campaign?.destinationType
                     ? DEST_BADGE[lead.campaign.destinationType]
@@ -157,6 +190,23 @@ export default async function LeadsPage({
                       <td className="px-3 py-3.5">
                         <RoutingStatusBadge status={lead.routingStatus} />
                       </td>
+                      {serviceArea && (
+                        <td className="px-3 py-3.5">
+                          {lead.inServiceArea === false && (
+                            <span className="inline-flex rounded-full bg-red-50 dark:bg-red-500/10 px-2 py-0.5 text-xs font-medium text-red-700 dark:text-red-400">
+                              Out of area
+                            </span>
+                          )}
+                          {lead.inServiceArea === true && (
+                            <span className="inline-flex rounded-full bg-emerald-50 dark:bg-emerald-500/10 px-2 py-0.5 text-xs font-medium text-emerald-700 dark:text-emerald-400">
+                              In area
+                            </span>
+                          )}
+                          {lead.inServiceArea === null && (
+                            <span className="text-gray-400 dark:text-[#8B90A0] text-xs">—</span>
+                          )}
+                        </td>
+                      )}
                       <td className="px-3 py-3.5 text-xs text-gray-400 dark:text-[#8B90A0]">
                         {formatDistanceToNow(lead.createdAt, { addSuffix: true })}
                       </td>

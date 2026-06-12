@@ -1,10 +1,12 @@
 import { decrypt } from "@/lib/crypto";
 import { fireCAPIEvent } from "@/lib/meta/capi";
 import { db } from "@/lib/db";
+import { haversineDistance } from "@/lib/geo";
 import type { ProcessingContext } from "../types";
 
 /**
  * Fires a "Lead" event to Meta Conversions API with hashed user data.
+ * Includes in_service_area custom parameter when service area is configured.
  * Non-blocking: failure updates capiStatus=FAILED but does not throw.
  * Skips if campaign.capiEnabled=false or MetaConnection has no pixelId.
  */
@@ -19,6 +21,18 @@ export async function fireCAPILead(ctx: ProcessingContext): Promise<void> {
   if (!campaign.metaConnection.pixelId) {
     await db.lead.update({ where: { id: leadId }, data: { capiStatus: "SKIPPED" } });
     return;
+  }
+
+  // Compute in-service-area flag if we have coordinates
+  let inServiceArea: boolean | null = null;
+  if (ctx.lat != null && ctx.lng != null) {
+    const serviceArea = await db.serviceArea.findUnique({
+      where: { accountId: campaign.accountId },
+    });
+    if (serviceArea) {
+      const dist = haversineDistance(serviceArea.lat, serviceArea.lng, ctx.lat, ctx.lng);
+      inServiceArea = dist <= serviceArea.radiusMiles;
+    }
   }
 
   const eventTime = Math.floor(
@@ -45,6 +59,7 @@ export async function fireCAPILead(ctx: ProcessingContext): Promise<void> {
       state: ctx.state,
       metaLeadId: ctx.metaLeadId,
     },
+    customData: { inServiceArea },
     metaAdId: ctx.metaAdId,
     metaAdSetId: ctx.metaAdSetId,
   });

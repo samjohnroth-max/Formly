@@ -13,6 +13,7 @@ import {
   fetchCAPIHealth,
   fetchCampaignPerformance,
   fetchAdSpend,
+  fetchOutOfAreaMetrics,
 } from "./data";
 
 export const revalidate = 0;
@@ -26,12 +27,13 @@ export default async function DashboardPage() {
 
   const accountId = user?.accountId ?? "";
 
-  const [routing, revenue, capiHealth, campaignPerf, adSpend] = await Promise.all([
+  const [routing, revenue, capiHealth, campaignPerf, adSpend, outOfArea] = await Promise.all([
     accountId ? fetchRoutingMetrics(accountId) : Promise.resolve({ leadsToday: 0, successToday: 0, successRate: 0, avgRoutingSec: 0 }),
     accountId ? fetchRevenueMetrics(accountId) : Promise.resolve({ totalRevenueThisMonth: 0, avgJobValue: 0, bookingRateThisMonth: 0, purchaseEvents30Days: 0 }),
     accountId ? fetchCAPIHealth(accountId) : Promise.resolve([]),
     accountId ? fetchCampaignPerformance(accountId) : Promise.resolve([]),
     accountId ? fetchAdSpend(accountId) : Promise.resolve([]),
+    accountId ? fetchOutOfAreaMetrics(accountId) : Promise.resolve({ outOfAreaThisMonth: 0, outOfAreaPct: 0 }),
   ]);
 
   return (
@@ -42,7 +44,7 @@ export default async function DashboardPage() {
       <ConnectionHealthBanner />
 
       {/* Routing metrics */}
-      <MetricsCards metrics={routing} />
+      <MetricsCards metrics={routing} outOfArea={outOfArea} />
 
       {/* Revenue metrics */}
       <RevenueCards metrics={revenue} />

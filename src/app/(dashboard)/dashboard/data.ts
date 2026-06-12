@@ -1,6 +1,12 @@
 import { db } from "@/lib/db";
+import { haversineDistance } from "@/lib/geo";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
+
+export interface OutOfAreaMetrics {
+  outOfAreaThisMonth: number;
+  outOfAreaPct: number;
+}
 
 export interface RoutingMetrics {
   leadsToday: number;
@@ -204,6 +210,28 @@ export async function fetchCampaignPerformance(accountId: string): Promise<Campa
       revenueTrend,
     };
   });
+}
+
+export async function fetchOutOfAreaMetrics(accountId: string): Promise<OutOfAreaMetrics> {
+  const ms = monthStart();
+
+  const [serviceArea, leadsThisMonth] = await Promise.all([
+    db.serviceArea.findUnique({ where: { accountId } }),
+    db.lead.findMany({
+      where: { accountId, createdAt: { gte: ms } },
+      select: { lat: true, lng: true },
+    }),
+  ]);
+
+  if (!serviceArea) return { outOfAreaThisMonth: 0, outOfAreaPct: 0 };
+
+  const geoLeads = leadsThisMonth.filter((l) => l.lat != null && l.lng != null);
+  const outOfArea = geoLeads.filter(
+    (l) => haversineDistance(serviceArea.lat, serviceArea.lng, l.lat!, l.lng!) > serviceArea.radiusMiles
+  );
+
+  const pct = geoLeads.length > 0 ? Math.round((outOfArea.length / geoLeads.length) * 100) : 0;
+  return { outOfAreaThisMonth: outOfArea.length, outOfAreaPct: pct };
 }
 
 export async function fetchAdSpend(accountId: string): Promise<AdSpendRow[]> {

@@ -5,16 +5,24 @@ import { db } from "@/lib/db";
 import { ChangePasswordForm } from "./ChangePasswordForm";
 import { SendingDomainSettings } from "./SendingDomainSettings";
 import { ThemeSettingsCard } from "./ThemeSettingsCard";
+import { ServiceAreaSettings } from "@/components/settings/ServiceAreaSettings";
 
 export const revalidate = 0;
 
 export default async function SettingsPage() {
   const session = await getRequiredSession();
 
-  const user = await db.user.findUnique({
-    where: { id: session.user.id },
-    select: { name: true, email: true, role: true, createdAt: true },
-  });
+  const [user, serviceArea] = await Promise.all([
+    db.user.findUnique({
+      where: { id: session.user.id },
+      select: { name: true, email: true, role: true, createdAt: true, accountId: true },
+    }),
+    (async () => {
+      const u = await db.user.findUnique({ where: { id: session.user.id }, select: { accountId: true } });
+      if (!u?.accountId) return null;
+      return db.serviceArea.findUnique({ where: { accountId: u.accountId } });
+    })(),
+  ]);
 
   return (
     <div className="mx-auto max-w-2xl p-8 space-y-6">
@@ -75,6 +83,9 @@ export default async function SettingsPage() {
         </div>
         <span className="text-xs text-blue-600 dark:text-[#3B7DD8] group-hover:underline">Configure →</span>
       </Link>
+
+      {/* Service area */}
+      <ServiceAreaSettings initial={serviceArea} />
 
       {/* Email sending domain */}
       <SendingDomainSettings />

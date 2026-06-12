@@ -33,6 +33,8 @@ export interface CAPICustomData {
   currency?: string;
   /** Maps to Meta's content_category — use job type name */
   contentCategory?: string | null;
+  /** Whether the lead was inside the account's service area radius */
+  inServiceArea?: boolean | null;
 }
 
 export interface FireCAPIParams {
@@ -99,6 +101,9 @@ export async function fireCAPIEvent(
       cd.currency = customData.currency ?? "USD";
     }
     if (customData.contentCategory) cd.content_category = customData.contentCategory;
+    if (customData.inServiceArea != null) {
+      cd.in_service_area = customData.inServiceArea ? "1" : "0";
+    }
     if (Object.keys(cd).length) event.custom_data = cd;
   }
 

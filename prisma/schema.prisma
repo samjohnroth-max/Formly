@@ -98,6 +98,7 @@ model Account {
   templates       EmailTemplate[]
   users           User[]
   brandSettings   BrandSettings?
+  serviceArea     ServiceArea?
 
   @@map("orgs")
 }
@@ -436,4 +437,19 @@ model BrandSettings {
   footerText     String   @default("")
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
+}
+
+// ─── ServiceArea ──────────────────────────────────────────────────────────────
+// Per-account business location and service radius for lead geo-filtering.
+
+model ServiceArea {
+  id          String   @id @default(cuid())
+  accountId   String   @unique
+  account     Account  @relation(fields: [accountId], references: [id])
+  address     String
+  lat         Float
+  lng         Float
+  radiusMiles Float    @default(25)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
