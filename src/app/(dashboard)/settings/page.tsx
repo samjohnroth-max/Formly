@@ -1,3 +1,5 @@
+import Link from "next/link";
+import { Palette } from "lucide-react";
 import { getRequiredSession } from "@/lib/auth/session";
 import { db } from "@/lib/db";
 import { ChangePasswordForm } from "./ChangePasswordForm";
@@ -54,6 +56,21 @@ export default async function SettingsPage() {
           <ChangePasswordForm />
         </div>
       </div>
+
+      {/* Brand */}
+      <Link
+        href="/settings/brand"
+        className="flex items-center justify-between rounded-xl border border-gray-200 bg-white shadow-sm p-6 hover:bg-gray-50 transition-colors group"
+      >
+        <div>
+          <h2 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
+            <Palette className="size-4 text-gray-500" />
+            Brand settings
+          </h2>
+          <p className="mt-1 text-xs text-gray-500">Logo, colors, fonts, and email footer for all templates.</p>
+        </div>
+        <span className="text-xs text-blue-600 group-hover:underline">Configure →</span>
+      </Link>
 
       {/* Email sending domain */}
       <SendingDomainSettings />

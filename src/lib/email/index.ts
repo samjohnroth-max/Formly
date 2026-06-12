@@ -66,6 +66,15 @@ export class EmailService {
       from: options.from,
     });
   }
+
+  async sendRaw(options: {
+    to: string;
+    subject: string;
+    html: string;
+    from?: string;
+  }): Promise<{ id?: string }> {
+    return this.provider.send(options);
+  }
 }
 
 export const emailService = new EmailService();

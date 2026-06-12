@@ -30,7 +30,7 @@ export async function POST(req: Request) {
   if (!accountId)
     return NextResponse.json({ error: "No account" }, { status: 400 });
 
-  const { name, subject, body, blocks } = await req.json();
+  const { name, subject, body, blocks, config } = await req.json();
   if (!name?.trim() || !subject?.trim() || !body?.trim())
     return NextResponse.json(
       { error: "name, subject, and body are required" },
@@ -44,6 +44,7 @@ export async function POST(req: Request) {
       subject: subject.trim(),
       body: body.trim(),
       ...(blocks !== undefined && { blocks }),
+      ...(config !== undefined && { config }),
     },
   });
 

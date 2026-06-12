@@ -37,7 +37,7 @@ export async function PATCH(
   if (!accountId)
     return NextResponse.json({ error: "No account" }, { status: 400 });
 
-  const { name, subject, body, blocks } = await req.json();
+  const { name, subject, body, blocks, config } = await req.json();
 
   const result = await db.emailTemplate.updateMany({
     where: { id: params.id, accountId },
@@ -46,6 +46,7 @@ export async function PATCH(
       ...(subject !== undefined && { subject }),
       ...(body !== undefined && { body }),
       ...(blocks !== undefined && { blocks }),
+      ...(config !== undefined && { config }),
     },
   });
   if (result.count === 0)

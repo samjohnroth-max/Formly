@@ -90,6 +90,7 @@ model Account {
   leads           Lead[]
   templates       EmailTemplate[]
   users           User[]
+  brandSettings   BrandSettings?
 
   @@map("orgs")
 }
@@ -380,6 +381,7 @@ model EmailTemplate {
   subject   String
   body      String
   blocks    Json?
+  config    Json?
   isDefault Boolean  @default(false)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -387,4 +389,22 @@ model EmailTemplate {
   campaigns Campaign[]
 
   @@unique([accountId, name])
+}
+
+// ─── BrandSettings ────────────────────────────────────────────────────────────
+// Per-account brand configuration for email rendering.
+
+model BrandSettings {
+  id             String   @id @default(cuid())
+  accountId      String   @unique
+  account        Account  @relation(fields: [accountId], references: [id])
+  companyName    String   @default("")
+  primaryColor   String   @default("#2563eb")
+  secondaryColor String   @default("#f3f4f6")
+  logoUrl        String   @default("")
+  fontFamily     String   @default("Inter")
+  buttonStyle    String   @default("rounded")
+  footerText     String   @default("")
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 }
