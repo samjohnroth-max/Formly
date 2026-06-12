@@ -64,7 +64,7 @@ function Hero() {
             href="/signup"
             className="flex items-center gap-2 rounded-full bg-blue-600 px-8 py-3.5 text-sm font-semibold text-white hover:bg-blue-500 transition-colors"
           >
-            Start for free <ArrowRight className="size-4" />
+            Start free trial <ArrowRight className="size-4" />
           </Link>
           <Link
             href="/login"
@@ -76,7 +76,7 @@ function Hero() {
 
         {/* Mini feature list */}
         <div className="mt-10 flex flex-wrap justify-center gap-x-6 gap-y-2 text-xs text-gray-500">
-          {["No credit card required", "Free Starter plan", "Setup in under 10 minutes", "CAPI-compliant"].map((item) => (
+          {["No credit card required", "14-day free trial", "Setup in under 10 minutes", "CAPI-compliant"].map((item) => (
             <span key={item} className="flex items-center gap-1.5">
               <CheckCircle className="size-3.5 text-blue-500/70" />
               {item}
@@ -300,54 +300,54 @@ function Pricing() {
   const plans = [
     {
       name: "Starter",
-      price: "$0",
-      period: "forever",
-      description: "Get started with one campaign and see leads flow.",
+      price: "$49",
+      period: "per month",
+      description: "One location, one CRM. Everything to start routing leads automatically.",
       features: [
-        "1 Meta connection",
-        "1 ServiceTitan tenant",
-        "1 active campaign",
-        "500 leads / month",
-        "Email templates",
+        "1 Meta ad account",
+        "1 CRM connection (ServiceTitan)",
+        "Up to 500 leads / month",
+        "Email auto-reply",
+        "CAPI revenue loop",
         "Lead dashboard",
+        "14-day free trial",
       ],
-      cta: "Start free",
+      cta: "Start free trial",
       href: "/signup",
       highlight: false,
     },
     {
       name: "Pro",
-      price: "$149",
+      price: "$129",
       period: "per month",
-      description: "Everything you need to scale a single location.",
+      description: "Scale across ad accounts with full automation and branded emails.",
       features: [
-        "5 Meta connections",
-        "3 ServiceTitan tenants",
-        "Unlimited campaigns",
-        "5,000 leads / month",
-        "CAPI revenue signals",
-        "Email sequences",
-        "Priority support",
+        "Unlimited Meta ad accounts",
+        "3 CRM connections",
+        "Unlimited leads",
+        "Custom email templates + sequences",
+        "Full revenue map & analytics",
+        "Brand email builder",
+        "14-day free trial",
       ],
-      cta: "Start Pro",
+      cta: "Start free trial",
       href: "/signup",
       highlight: true,
     },
     {
       name: "Agency",
-      price: "$399",
+      price: "$299",
       period: "per month",
-      description: "For agencies managing multiple home service clients.",
+      description: "Manage every client from one workspace with full white-label control.",
       features: [
-        "Unlimited Meta connections",
-        "Unlimited ST tenants",
-        "Unlimited campaigns",
-        "25,000 leads / month",
-        "Multi-client workspace",
-        "White-label email",
-        "Dedicated onboarding",
+        "Unlimited everything",
+        "Multi-client dashboard",
+        "White-label emails",
+        "Priority support",
+        "Onboarding call",
+        "14-day free trial",
       ],
-      cta: "Start Agency",
+      cta: "Start free trial",
       href: "/signup",
       highlight: false,
     },
@@ -359,7 +359,7 @@ function Pricing() {
         <div className="mb-14 text-center">
           <p className="mb-3 text-sm font-semibold uppercase tracking-widest text-blue-500">Pricing</p>
           <h2 className="text-3xl font-bold tracking-tight text-white">Simple, transparent pricing</h2>
-          <p className="mt-3 text-gray-400">Start free. Upgrade when you're ready to scale.</p>
+          <p className="mt-3 text-gray-400">14-day free trial on all plans. No credit card required.</p>
         </div>
 
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
