@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import dynamic from "next/dynamic";
 import { MapPin, Save, Loader2 } from "lucide-react";
+import { Tooltip } from "@/components/ui/Tooltip";
 
 const ServiceAreaMap = dynamic(() => import("./ServiceAreaMap").then((m) => m.ServiceAreaMap), {
   ssr: false,
@@ -58,10 +59,13 @@ export function ServiceAreaSettings({ initial }: { initial: ServiceArea | null }
 
   return (
     <div className="rounded-xl border border-gray-200 dark:border-[#2A2D3E] bg-white dark:bg-[#1A1D27] shadow-sm p-6">
-      <h2 className="text-sm font-semibold text-gray-900 dark:text-[#F0F4FF] flex items-center gap-2 mb-1">
-        <MapPin className="size-4 text-gray-500 dark:text-[#8B90A0]" />
-        Service area
-      </h2>
+      <div className="flex items-center gap-2 mb-1">
+        <h2 className="text-sm font-semibold text-gray-900 dark:text-[#F0F4FF] flex items-center gap-2">
+          <MapPin className="size-4 text-gray-500 dark:text-[#8B90A0]" />
+          Service area
+        </h2>
+        <Tooltip content="Formly uses this location and radius to determine whether each lead falls within your service area. Out-of-area leads are flagged on the lead map and list, and an in_service_area parameter is sent to the Meta Conversions API for optimization." />
+      </div>
       <p className="text-xs text-gray-500 dark:text-[#8B90A0] mb-5">
         Set your business location and coverage radius. Leads outside this area are flagged on the map and lead list.
       </p>

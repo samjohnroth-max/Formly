@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Plus, Trash2, Loader2 } from "lucide-react";
 import type { WizardState, FieldMappingInput } from "@/types/db";
 import type { MetaFormQuestion } from "@/lib/meta/forms";
+import { Tooltip } from "@/components/ui/Tooltip";
 
 // Default mappings applied when a known field is detected in the form
 const SMART_DEFAULTS: Record<string, string> = {
@@ -102,9 +103,12 @@ export function Step3FieldMapper({ state, onChange }: Props) {
 
   return (
     <div className="space-y-4">
-      <p className="text-sm text-gray-600">
-        Map each Meta form field to a ServiceTitan field. Smart defaults have been pre-filled for recognized fields.
-      </p>
+      <div className="flex items-start gap-2">
+        <p className="text-sm text-gray-600">
+          Map each Meta form field to a ServiceTitan field. Smart defaults have been pre-filled for recognized fields.
+        </p>
+        <Tooltip content="Field mapping tells Formly how to translate your Meta form answers into ServiceTitan fields. Common mappings: full_name → customer.name, phone_number → customer.phone, street_address → location.street. Map as many address fields as possible to enable Booking destinations." />
+      </div>
 
       {!hasAddressField && (
         <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5">

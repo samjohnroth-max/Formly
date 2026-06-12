@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { getRequiredSession } from "@/lib/auth/session";
 import { signOut } from "@/lib/auth";
-import { LayoutDashboard, Link2, Megaphone, Users, Mail, Settings, LogOut } from "lucide-react";
+import { LayoutDashboard, Link2, Megaphone, Users, Mail, Settings, LogOut, HelpCircle } from "lucide-react";
 import { ThemeToggle } from "@/components/layout/ThemeToggle";
 
 const NAV = [
@@ -39,6 +39,13 @@ export default async function DashboardLayout({ children }: { children: React.Re
         </nav>
 
         <div className="border-t border-gray-200 dark:border-[#2A2D3E] p-3">
+          <Link
+            href="/help"
+            className="flex items-center gap-2.5 rounded-md px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-[#8B90A0] dark:hover:bg-white/10 dark:hover:text-[#F0F4FF] transition-colors mb-1"
+          >
+            <HelpCircle className="size-4 shrink-0" />
+            Help
+          </Link>
           <div className="mb-2 px-3 py-1">
             <p className="truncate text-xs font-medium text-gray-900 dark:text-[#F0F4FF]">
               {session.user?.name ?? "Account"}

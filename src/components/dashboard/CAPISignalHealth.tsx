@@ -1,5 +1,6 @@
 import { formatDistanceToNow } from "date-fns";
 import type { CAPIHealthRow } from "@/app/(dashboard)/dashboard/data";
+import { Tooltip } from "@/components/ui/Tooltip";
 
 const STATUS_CONFIG = {
   HEALTHY: { label: "Healthy", cls: "bg-green-100 text-green-700" },
@@ -10,7 +11,10 @@ const STATUS_CONFIG = {
 export function CAPISignalHealth({ rows }: { rows: CAPIHealthRow[] }) {
   return (
     <div>
-      <h2 className="mb-3 text-sm font-semibold text-gray-700">CAPI signal health — last 30 days</h2>
+      <div className="mb-3 flex items-center gap-1.5">
+        <h2 className="text-sm font-semibold text-gray-700 dark:text-[#F0F4FF]">CAPI signal health — last 30 days</h2>
+        <Tooltip content="CAPI signal strength shows how much conversion data Formly is sending to Meta. Healthy = 11+ events in 30 days. Low Volume = 1–10 events. No Signal = no events sent. Better signal means Meta's algorithm can optimize your ads more effectively." />
+      </div>
       <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
         {rows.length === 0 ? (
           <div className="flex h-24 items-center justify-center text-sm text-gray-400">

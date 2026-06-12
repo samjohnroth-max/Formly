@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Loader2, Briefcase, UserCheck, Phone } from "lucide-react";
 import type { WizardState, DestinationType } from "@/types/db";
 import type { STJobType, STBusinessUnit } from "@/lib/servicetitan/catalog";
+import { Tooltip } from "@/components/ui/Tooltip";
 
 interface STConnectionOption {
   id: string;
@@ -83,9 +84,12 @@ export function Step2Destination({ state, onChange, stConnections }: Props) {
 
       {/* Destination Type */}
       <div>
-        <label className="mb-2 block text-sm font-medium text-gray-700">
-          Destination Type <span className="text-red-500">*</span>
-        </label>
+        <div className="mb-2 flex items-center gap-1.5">
+          <label className="text-sm font-medium text-gray-700">
+            Destination Type <span className="text-red-500">*</span>
+          </label>
+          <Tooltip content="Booking creates a job in ServiceTitan immediately. Lead creates a lead record for your CSR team to review. Follow-up looks up an existing customer by phone or email and adds a task to their account." />
+        </div>
         <div className="space-y-2">
           {DESTINATION_OPTIONS.map(({ value, label, description, icon: Icon }) => (
             <button

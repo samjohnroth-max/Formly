@@ -75,6 +75,12 @@ enum CAPIStatus {
   SKIPPED
 }
 
+enum SupportTicketStatus {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+}
+
 // ─── Tenant Account ───────────────────────────────────────────────────────────
 // One row per Formly customer. All other tables are scoped to an account via accountId.
 // @@map("orgs") avoids collision with NextAuth's own `accounts` table.
@@ -99,6 +105,7 @@ model Account {
   users           User[]
   brandSettings   BrandSettings?
   serviceArea     ServiceArea?
+  supportTickets  SupportTicket[]
 
   @@map("orgs")
 }
@@ -135,8 +142,9 @@ model User {
   image         String?
   createdAt     DateTime  @default(now())
 
-  authAccounts AuthAccount[]
-  sessions     Session[]
+  authAccounts    AuthAccount[]
+  sessions        Session[]
+  supportTickets  SupportTicket[]
 }
 
 // ─── NextAuth: AuthAccount ────────────────────────────────────────────────────
@@ -452,4 +460,23 @@ model ServiceArea {
   radiusMiles Float    @default(25)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+}
+
+// ─── SupportTicket ────────────────────────────────────────────────────────────
+// User-submitted support requests with email notification to admin.
+
+model SupportTicket {
+  id          String              @id @default(cuid())
+  accountId   String
+  account     Account             @relation(fields: [accountId], references: [id])
+  userId      String
+  user        User                @relation(fields: [userId], references: [id])
+  subject     String
+  category    String
+  description String              @db.Text
+  status      SupportTicketStatus @default(OPEN)
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+
+  @@index([accountId, createdAt(sort: Desc)])
 }
