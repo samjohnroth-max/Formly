@@ -132,6 +132,11 @@ function LoginForm() {
             </Link>
           </p>
         </div>
+        <p className="mt-4 text-center text-xs text-gray-400">
+          <Link href="/terms" className="hover:text-gray-600 transition-colors">Terms</Link>
+          {" · "}
+          <Link href="/privacy" className="hover:text-gray-600 transition-colors">Privacy</Link>
+        </p>
       </div>
     </main>
   );

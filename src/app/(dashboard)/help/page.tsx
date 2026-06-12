@@ -192,6 +192,16 @@ export default function HelpPage() {
       </div>
 
       {showModal && <ContactSupportModal onClose={() => setShowModal(false)} />}
+
+      {/* Footer */}
+      <div className="mt-12 border-t border-gray-200 dark:border-[#2A2D3E] pt-6 flex items-center justify-between">
+        <p className="text-xs text-gray-400 dark:text-[#8B90A0]">© {new Date().getFullYear()} Formly</p>
+        <div className="flex items-center gap-4 text-xs text-gray-400 dark:text-[#8B90A0]">
+          <Link href="/terms" className="hover:text-gray-600 dark:hover:text-[#F0F4FF] transition-colors">Terms</Link>
+          <Link href="/privacy" className="hover:text-gray-600 dark:hover:text-[#F0F4FF] transition-colors">Privacy</Link>
+          <a href="mailto:support@formly.app" className="hover:text-gray-600 dark:hover:text-[#F0F4FF] transition-colors">support@formly.app</a>
+        </div>
+      </div>
     </>
   );
 }

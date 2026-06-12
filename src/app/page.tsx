@@ -466,6 +466,8 @@ function Footer() {
             <Link href="/login" className="hover:text-gray-300 transition-colors">Sign in</Link>
             <Link href="/signup" className="hover:text-gray-300 transition-colors">Sign up</Link>
             <a href="mailto:support@formly.app" className="hover:text-gray-300 transition-colors">support@formly.app</a>
+            <Link href="/privacy" className="hover:text-gray-300 transition-colors">Privacy</Link>
+            <Link href="/terms" className="hover:text-gray-300 transition-colors">Terms</Link>
           </div>
           <p className="text-xs text-gray-600">© {new Date().getFullYear()} Formly. All rights reserved.</p>
         </div>
