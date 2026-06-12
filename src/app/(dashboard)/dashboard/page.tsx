@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { getRequiredSession } from "@/lib/auth/session";
 import { db } from "@/lib/db";
 import { MetricsCards } from "@/components/dashboard/MetricsCards";
@@ -7,6 +8,7 @@ import { RevenueCards } from "@/components/dashboard/RevenueCards";
 import { CAPISignalHealth } from "@/components/dashboard/CAPISignalHealth";
 import { CampaignPerformanceTable } from "@/components/dashboard/CampaignPerformanceTable";
 import { AdSpendROAS } from "@/components/dashboard/AdSpendROAS";
+import { DateRangeFilter } from "@/components/dashboard/DateRangeFilter";
 import {
   fetchRoutingMetrics,
   fetchRevenueMetrics,
@@ -16,10 +18,15 @@ import {
   fetchOutOfAreaMetrics,
 } from "./data";
 import { FormlyPattern } from "@/components/brand/FormlyPattern";
+import { parseDateRangeParams } from "@/lib/dashboard/dateRange";
 
 export const revalidate = 0;
 
-export default async function DashboardPage() {
+interface PageProps {
+  searchParams: { range?: string; start?: string; end?: string };
+}
+
+export default async function DashboardPage({ searchParams }: PageProps) {
   const session = await getRequiredSession();
   const user = await db.user.findUnique({
     where: { id: session.user.id },
@@ -27,14 +34,19 @@ export default async function DashboardPage() {
   });
 
   const accountId = user?.accountId ?? "";
+  const dateRange = parseDateRangeParams(searchParams);
 
   const [routing, revenue, capiHealth, campaignPerf, adSpend, outOfArea] = await Promise.all([
-    accountId ? fetchRoutingMetrics(accountId) : Promise.resolve({ leadsToday: 0, successToday: 0, successRate: 0, avgRoutingSec: 0 }),
-    accountId ? fetchRevenueMetrics(accountId) : Promise.resolve({ totalRevenueThisMonth: 0, avgJobValue: 0, bookingRateThisMonth: 0, purchaseEvents30Days: 0 }),
-    accountId ? fetchCAPIHealth(accountId) : Promise.resolve([]),
-    accountId ? fetchCampaignPerformance(accountId) : Promise.resolve([]),
+    accountId
+      ? fetchRoutingMetrics(accountId, dateRange)
+      : Promise.resolve({ leadsToday: 0, successToday: 0, successRate: 0, avgRoutingSec: 0 }),
+    accountId
+      ? fetchRevenueMetrics(accountId, dateRange)
+      : Promise.resolve({ totalRevenueThisMonth: 0, avgJobValue: 0, bookingRateThisMonth: 0, purchaseEvents30Days: 0 }),
+    accountId ? fetchCAPIHealth(accountId, dateRange) : Promise.resolve([]),
+    accountId ? fetchCampaignPerformance(accountId, dateRange) : Promise.resolve([]),
     accountId ? fetchAdSpend(accountId) : Promise.resolve([]),
-    accountId ? fetchOutOfAreaMetrics(accountId) : Promise.resolve({ outOfAreaThisMonth: 0, outOfAreaPct: 0 }),
+    accountId ? fetchOutOfAreaMetrics(accountId, dateRange) : Promise.resolve({ outOfAreaThisMonth: 0, outOfAreaPct: 0 }),
   ]);
 
   return (
@@ -47,6 +59,15 @@ export default async function DashboardPage() {
           <p className="text-xs text-blue-200 mt-0.5">Real-time lead routing and CAPI performance</p>
         </div>
       </div>
+
+      {/* Date range filter */}
+      <Suspense fallback={null}>
+        <DateRangeFilter
+          currentPreset={dateRange.preset}
+          currentStart={dateRange.startStr}
+          currentEnd={dateRange.endStr}
+        />
+      </Suspense>
 
       {/* Connection health warning */}
       <ConnectionHealthBanner />

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useSearchParams } from "next/navigation";
 import dynamic from "next/dynamic";
 import { LeadFeed } from "./LeadFeed";
 import { RefreshCw } from "lucide-react";
@@ -36,6 +37,7 @@ interface ServiceAreaData {
 const POLL_MS = 30_000;
 
 export function DashboardLive() {
+  const searchParams = useSearchParams();
   const [leads, setLeads] = useState<FeedLead[]>([]);
   const [serviceArea, setServiceArea] = useState<ServiceAreaData | null>(null);
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
@@ -43,7 +45,19 @@ export function DashboardLive() {
 
   const fetchLeads = useCallback(async () => {
     try {
-      const res = await fetch("/api/dashboard/feed");
+      const params = new URLSearchParams();
+      const start = searchParams.get("start");
+      const end = searchParams.get("end");
+      const range = searchParams.get("range");
+
+      // Only filter by date when a specific range is active
+      if (range && range !== "all") {
+        if (start) params.set("start", start);
+        if (end) params.set("end", end);
+      }
+
+      const url = `/api/dashboard/feed${params.size > 0 ? `?${params}` : ""}`;
+      const res = await fetch(url);
       if (!res.ok) return;
       const data = await res.json();
       setLeads(data.leads ?? []);
@@ -52,7 +66,7 @@ export function DashboardLive() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [searchParams]);
 
   useEffect(() => {
     fetchLeads();

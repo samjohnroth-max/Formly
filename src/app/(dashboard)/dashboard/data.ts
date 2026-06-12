@@ -1,5 +1,6 @@
 import { db } from "@/lib/db";
 import { haversineDistance } from "@/lib/geo";
+import type { DateRange } from "@/lib/dashboard/dateRange";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -74,20 +75,31 @@ function toMonthKey(d: Date) {
 
 // ─── Fetchers ─────────────────────────────────────────────────────────────────
 
-export async function fetchRoutingMetrics(accountId: string): Promise<RoutingMetrics> {
-  const [leadsToday, successToday, leadsThirty, successThirty, routingTimes] =
+export async function fetchRoutingMetrics(
+  accountId: string,
+  range?: DateRange
+): Promise<RoutingMetrics> {
+  const rangeStart = range?.start ?? daysAgo(30);
+  const rangeEnd = range?.end;
+
+  const rangeFilter = {
+    gte: rangeStart,
+    ...(rangeEnd ? { lte: rangeEnd } : {}),
+  };
+
+  const [leadsToday, successToday, leadsRange, successRange, routingTimes] =
     await Promise.all([
       db.lead.count({ where: { accountId, createdAt: { gte: todayStart() } } }),
       db.lead.count({ where: { accountId, routingStatus: "SUCCESS", createdAt: { gte: todayStart() } } }),
-      db.lead.count({ where: { accountId, createdAt: { gte: daysAgo(30) } } }),
-      db.lead.count({ where: { accountId, routingStatus: "SUCCESS", createdAt: { gte: daysAgo(30) } } }),
+      db.lead.count({ where: { accountId, createdAt: rangeFilter } }),
+      db.lead.count({ where: { accountId, routingStatus: "SUCCESS", createdAt: rangeFilter } }),
       db.lead.findMany({
-        where: { accountId, routingStatus: "SUCCESS", createdAt: { gte: daysAgo(30) } },
+        where: { accountId, routingStatus: "SUCCESS", createdAt: rangeFilter },
         select: { createdAt: true, updatedAt: true },
       }),
     ]);
 
-  const successRate = leadsThirty > 0 ? Math.round((successThirty / leadsThirty) * 100) : 0;
+  const successRate = leadsRange > 0 ? Math.round((successRange / leadsRange) * 100) : 0;
   const avgMs =
     routingTimes.length > 0
       ? routingTimes.reduce((s, l) => s + (l.updatedAt.getTime() - l.createdAt.getTime()), 0) /
@@ -97,17 +109,26 @@ export async function fetchRoutingMetrics(accountId: string): Promise<RoutingMet
   return { leadsToday, successToday, successRate, avgRoutingSec: Math.round(avgMs / 1000) };
 }
 
-export async function fetchRevenueMetrics(accountId: string): Promise<RevenueMetrics> {
-  const ms = monthStart();
+export async function fetchRevenueMetrics(
+  accountId: string,
+  range?: DateRange
+): Promise<RevenueMetrics> {
+  const rangeStart = range?.start ?? monthStart();
+  const rangeEnd = range?.end;
   const ago30 = daysAgo(30);
 
-  const [invoicedLeads, allLeadsMonth, purchaseEvents30Days] = await Promise.all([
+  const rangeFilter = {
+    gte: rangeStart,
+    ...(rangeEnd ? { lte: rangeEnd } : {}),
+  };
+
+  const [invoicedLeads, allLeadsRange, purchaseEvents30Days] = await Promise.all([
     db.lead.findMany({
-      where: { accountId, invoiceValue: { not: null, gt: 0 }, createdAt: { gte: ms } },
+      where: { accountId, invoiceValue: { not: null, gt: 0 }, createdAt: rangeFilter },
       select: { invoiceValue: true },
     }),
     db.lead.findMany({
-      where: { accountId, createdAt: { gte: ms } },
+      where: { accountId, createdAt: rangeFilter },
       select: { stJobId: true },
     }),
     db.cAPIEvent.count({
@@ -117,14 +138,24 @@ export async function fetchRevenueMetrics(accountId: string): Promise<RevenueMet
 
   const totalRevenueThisMonth = invoicedLeads.reduce((s, l) => s + (l.invoiceValue ?? 0), 0);
   const avgJobValue = invoicedLeads.length > 0 ? totalRevenueThisMonth / invoicedLeads.length : 0;
-  const booked = allLeadsMonth.filter((l) => l.stJobId).length;
-  const bookingRateThisMonth = allLeadsMonth.length > 0 ? Math.round((booked / allLeadsMonth.length) * 100) : 0;
+  const booked = allLeadsRange.filter((l) => l.stJobId).length;
+  const bookingRateThisMonth =
+    allLeadsRange.length > 0 ? Math.round((booked / allLeadsRange.length) * 100) : 0;
 
   return { totalRevenueThisMonth, avgJobValue, bookingRateThisMonth, purchaseEvents30Days };
 }
 
-export async function fetchCAPIHealth(accountId: string): Promise<CAPIHealthRow[]> {
-  const ago30 = daysAgo(30);
+export async function fetchCAPIHealth(
+  accountId: string,
+  range?: DateRange
+): Promise<CAPIHealthRow[]> {
+  const rangeStart = range?.start ?? daysAgo(30);
+  const rangeEnd = range?.end;
+
+  const rangeFilter = {
+    gte: rangeStart,
+    ...(rangeEnd ? { lte: rangeEnd } : {}),
+  };
 
   const [campaigns, events] = await Promise.all([
     db.campaign.findMany({
@@ -133,7 +164,7 @@ export async function fetchCAPIHealth(accountId: string): Promise<CAPIHealthRow[
       orderBy: { name: "asc" },
     }),
     db.cAPIEvent.findMany({
-      where: { status: "SENT", createdAt: { gte: ago30 }, lead: { accountId } },
+      where: { status: "SENT", createdAt: rangeFilter, lead: { accountId } },
       select: { eventName: true, createdAt: true, lead: { select: { campaignId: true } } },
     }),
   ]);
@@ -153,33 +184,42 @@ export async function fetchCAPIHealth(accountId: string): Promise<CAPIHealthRow[
   });
 }
 
-export async function fetchCampaignPerformance(accountId: string): Promise<CampaignPerfRow[]> {
-  const ms = monthStart();
+export async function fetchCampaignPerformance(
+  accountId: string,
+  range?: DateRange
+): Promise<CampaignPerfRow[]> {
+  const rangeStart = range?.start ?? monthStart();
+  const rangeEnd = range?.end;
   const ago7 = daysAgo(7);
 
-  const [campaigns, leadsMonth, capiEvents] = await Promise.all([
+  const rangeFilter = {
+    gte: rangeStart,
+    ...(rangeEnd ? { lte: rangeEnd } : {}),
+  };
+
+  const [campaigns, leadsRange, capiEvents] = await Promise.all([
     db.campaign.findMany({
       where: { accountId, status: { not: "ARCHIVED" } },
       select: { id: true, name: true },
       orderBy: { name: "asc" },
     }),
     db.lead.findMany({
-      where: { accountId, createdAt: { gte: ms } },
+      where: { accountId, createdAt: rangeFilter },
       select: { campaignId: true, stJobId: true, invoiceValue: true, createdAt: true },
     }),
     db.cAPIEvent.findMany({
-      where: { status: "SENT", createdAt: { gte: ms }, lead: { accountId } },
+      where: { status: "SENT", createdAt: rangeFilter, lead: { accountId } },
       select: { lead: { select: { campaignId: true } } },
     }),
   ]);
 
-  // 7-day revenue leads for sparklines
-  const revenueLeads7d = leadsMonth.filter(
+  // 7-day revenue leads for sparklines (always last 7 days regardless of filter)
+  const revenueLeads7d = leadsRange.filter(
     (l) => l.invoiceValue && l.invoiceValue > 0 && l.createdAt >= ago7
   );
 
   return campaigns.map((c) => {
-    const leads = leadsMonth.filter((l) => l.campaignId === c.id);
+    const leads = leadsRange.filter((l) => l.campaignId === c.id);
     const booked = leads.filter((l) => l.stJobId).length;
     const invoiced = leads.filter((l) => l.invoiceValue && l.invoiceValue > 0);
     const totalRevenue = invoiced.reduce((s, l) => s + (l.invoiceValue ?? 0), 0);
@@ -212,13 +252,22 @@ export async function fetchCampaignPerformance(accountId: string): Promise<Campa
   });
 }
 
-export async function fetchOutOfAreaMetrics(accountId: string): Promise<OutOfAreaMetrics> {
-  const ms = monthStart();
+export async function fetchOutOfAreaMetrics(
+  accountId: string,
+  range?: DateRange
+): Promise<OutOfAreaMetrics> {
+  const rangeStart = range?.start ?? monthStart();
+  const rangeEnd = range?.end;
+
+  const rangeFilter = {
+    gte: rangeStart,
+    ...(rangeEnd ? { lte: rangeEnd } : {}),
+  };
 
   const [serviceArea, leadsThisMonth] = await Promise.all([
     db.serviceArea.findUnique({ where: { accountId } }),
     db.lead.findMany({
-      where: { accountId, createdAt: { gte: ms } },
+      where: { accountId, createdAt: rangeFilter },
       select: { lat: true, lng: true },
     }),
   ]);
@@ -235,7 +284,7 @@ export async function fetchOutOfAreaMetrics(accountId: string): Promise<OutOfAre
 }
 
 export async function fetchAdSpend(accountId: string): Promise<AdSpendRow[]> {
-  // Last 3 calendar months including current
+  // Ad spend is month-based and not affected by the date range filter
   const now = new Date();
   const months = Array.from({ length: 3 }, (_, i) => {
     const d = new Date(now.getFullYear(), now.getMonth() - (2 - i), 1);

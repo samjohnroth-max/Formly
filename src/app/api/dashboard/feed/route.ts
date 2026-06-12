@@ -1,9 +1,9 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { getRequiredSession } from "@/lib/auth/session";
 import { db } from "@/lib/db";
 import { haversineDistance } from "@/lib/geo";
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   const session = await getRequiredSession();
   const user = await db.user.findUnique({
     where: { id: session.user.id },
@@ -11,9 +11,20 @@ export async function GET() {
   });
   if (!user?.accountId) return NextResponse.json({ leads: [], serviceArea: null });
 
+  const { searchParams } = req.nextUrl;
+  const startStr = searchParams.get("start");
+  const endStr = searchParams.get("end");
+
+  const dateFilter: { gte?: Date; lte?: Date } = {};
+  if (startStr) dateFilter.gte = new Date(startStr);
+  if (endStr) dateFilter.lte = new Date(endStr);
+
   const [leads, serviceArea] = await Promise.all([
     db.lead.findMany({
-      where: { accountId: user.accountId },
+      where: {
+        accountId: user.accountId,
+        ...(Object.keys(dateFilter).length > 0 ? { createdAt: dateFilter } : {}),
+      },
       orderBy: { createdAt: "desc" },
       take: 50,
       select: {
