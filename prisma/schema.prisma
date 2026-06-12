@@ -1,0 +1,390 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Enums ────────────────────────────────────────────────────────────────────
+
+enum Plan {
+  STARTER
+  PRO
+  AGENCY
+}
+
+enum AccountStatus {
+  ACTIVE
+  SUSPENDED
+  CANCELLED
+}
+
+enum UserRole {
+  OWNER
+  ADMIN
+  MEMBER
+}
+
+enum ConnectionStatus {
+  ACTIVE
+  EXPIRED
+  ERROR
+  DISCONNECTED
+}
+
+enum DestinationType {
+  BOOKING
+  LEAD
+  FOLLOWUP
+}
+
+enum CampaignStatus {
+  ACTIVE
+  PAUSED
+  ARCHIVED
+}
+
+enum RoutingStatus {
+  PENDING
+  PROCESSING
+  SUCCESS
+  FAILED
+  RETRY
+}
+
+enum EmailStatus {
+  PENDING
+  SENT
+  FAILED
+  SKIPPED
+}
+
+enum CAPIStatus {
+  PENDING
+  SENT
+  FAILED
+  SKIPPED
+}
+
+// ─── Tenant Account ───────────────────────────────────────────────────────────
+// One row per Formly customer. All other tables are scoped to an account via accountId.
+// @@map("orgs") avoids collision with NextAuth's own `accounts` table.
+
+model Account {
+  id               String        @id @default(cuid())
+  name             String
+  email            String        @unique
+  passwordHash     String?
+  plan             Plan          @default(STARTER)
+  status           AccountStatus @default(ACTIVE)
+  stripeCustomerId String?
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  metaConnections MetaConnection[]
+  stConnections   STConnection[]
+  clients         Client[]
+  campaigns       Campaign[]
+  leads           Lead[]
+  templates       EmailTemplate[]
+  users           User[]
+
+  @@map("orgs")
+}
+
+// ─── Client ───────────────────────────────────────────────────────────────────
+// Agency grouping model — one row per end-client. MetaConnection and STConnection
+// are linked here so a single card shows the full picture for each client.
+
+model Client {
+  id        String   @id @default(cuid())
+  accountId String
+  account   Account  @relation(fields: [accountId], references: [id])
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  metaConnections MetaConnection[]
+  stConnections   STConnection[]
+}
+
+// ─── User ─────────────────────────────────────────────────────────────────────
+// Multiple users per account (agency use case). One user can belong to one account at MVP.
+// emailVerified and image are required by NextAuth PrismaAdapter.
+
+model User {
+  id            String    @id @default(cuid())
+  accountId     String?
+  account       Account?  @relation(fields: [accountId], references: [id])
+  email         String?   @unique
+  name          String?
+  password      String?
+  role          UserRole  @default(MEMBER)
+  emailVerified DateTime?
+  image         String?
+  createdAt     DateTime  @default(now())
+
+  authAccounts AuthAccount[]
+  sessions     Session[]
+}
+
+// ─── NextAuth: AuthAccount ────────────────────────────────────────────────────
+// Stores OAuth provider accounts linked to a User. Required by PrismaAdapter.
+// Stored in `accounts` SQL table.
+
+model AuthAccount {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+// ─── NextAuth: Session ────────────────────────────────────────────────────────
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// ─── NextAuth: VerificationToken ─────────────────────────────────────────────
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// ─── MetaConnection ───────────────────────────────────────────────────────────
+// Stores OAuth tokens for a connected Meta Business account.
+// One account can have multiple connections.
+
+model MetaConnection {
+  id              String           @id @default(cuid())
+  accountId       String
+  account         Account          @relation(fields: [accountId], references: [id])
+  groupId         String?
+  group           Client?          @relation(fields: [groupId], references: [id])
+  metaAccountId   String
+  metaAccountName String
+  accessToken     String
+  tokenExpiresAt  DateTime?
+  pixelId         String?
+  datasetId       String?
+  status          ConnectionStatus @default(ACTIVE)
+  createdAt       DateTime         @default(now())
+
+  campaigns Campaign[]
+
+  @@index([accountId])
+  @@index([accountId, status])
+}
+
+// ─── STConnection ─────────────────────────────────────────────────────────────
+// ServiceTitan API credentials. Encrypted. One account can connect multiple ST tenants.
+
+model STConnection {
+  id             String           @id @default(cuid())
+  accountId      String
+  account        Account          @relation(fields: [accountId], references: [id])
+  groupId        String?
+  group          Client?          @relation(fields: [groupId], references: [id])
+  tenantId       String
+  tenantName     String
+  clientId       String           // ServiceTitan OAuth client_id (encrypted)
+  clientSecret   String
+  appKey         String
+  accessToken    String?
+  tokenExpiresAt DateTime?
+  status         ConnectionStatus @default(ACTIVE)
+  createdAt      DateTime         @default(now())
+
+  campaigns Campaign[]
+
+  @@index([accountId])
+  @@index([accountId, status])
+}
+
+// ─── Campaign ─────────────────────────────────────────────────────────────────
+// One row per Meta Instant Form linked to Formly.
+// This is the core routing configuration.
+
+model Campaign {
+  id               String          @id @default(cuid())
+  accountId        String
+  account          Account         @relation(fields: [accountId], references: [id])
+  metaConnectionId String
+  metaConnection   MetaConnection  @relation(fields: [metaConnectionId], references: [id])
+  stConnectionId   String
+  stConnection     STConnection    @relation(fields: [stConnectionId], references: [id])
+  name             String
+  metaFormId       String
+  metaFormName     String
+  metaAdAccountId  String
+  destinationType  DestinationType @default(BOOKING)
+  jobType          String?
+  businessUnit     String?
+  priority         String?
+  assignedTo       String?
+  followupDays     Int             @default(0)
+  capiEnabled      Boolean         @default(true)
+  campaignTag      String?
+  emailTemplateId  String?
+  emailTemplate    EmailTemplate?  @relation(fields: [emailTemplateId], references: [id])
+  status           CampaignStatus  @default(ACTIVE)
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+
+  fieldMappings FieldMapping[]
+  leads         Lead[]
+  adSpends      MonthlyAdSpend[]
+
+  @@index([accountId])
+  @@index([metaFormId, status]) // hot path: queried on every incoming lead
+}
+
+// ─── MonthlyAdSpend ───────────────────────────────────────────────────────────
+// Manual ad-spend entry per campaign per month for ROAS calculation.
+
+model MonthlyAdSpend {
+  id         String   @id @default(cuid())
+  campaignId String
+  campaign   Campaign @relation(fields: [campaignId], references: [id])
+  month      DateTime // UTC midnight, first day of month
+  spend      Float    @default(0)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([campaignId, month])
+}
+
+// ─── FieldMapping ─────────────────────────────────────────────────────────────
+// Maps a Meta form field name to a ServiceTitan field path.
+// One row per mapped field.
+
+model FieldMapping {
+  id         String   @id @default(cuid())
+  campaignId String
+  campaign   Campaign @relation(fields: [campaignId], references: [id])
+  metaField  String
+  stField    String
+  transform  String?
+}
+
+// ─── Lead ─────────────────────────────────────────────────────────────────────
+// Every incoming form submission creates one Lead row. This is the audit trail.
+
+model Lead {
+  id                String        @id @default(cuid())
+  accountId         String
+  account           Account       @relation(fields: [accountId], references: [id])
+  campaignId        String
+  campaign          Campaign      @relation(fields: [campaignId], references: [id])
+  metaLeadId        String        @unique
+  metaAdId          String?
+  metaAdSetId       String?
+  metaCampaignId    String?
+  rawData           Json
+  formData          Json?
+  firstName         String?
+  lastName          String?
+  email             String?
+  phone             String?
+  zip               String?
+  city              String?
+  state             String?
+  lat               Float?
+  lng               Float?
+  street            String?
+  serviceInterest   String?
+  stCustomerId      String?
+  stJobId           String?
+  stLocationId      String?
+  addressComplete   Boolean?
+  stLeadId          String?
+  stTaskId          String?
+  stMatchedCustomer Boolean       @default(false)
+  routingStatus     RoutingStatus @default(PENDING)
+  routingError      String?
+  routingAttempts   Int           @default(0)
+  emailStatus       EmailStatus   @default(PENDING)
+  emailSentAt       DateTime?
+  capiStatus        CAPIStatus    @default(PENDING)
+  capiEventId       String?
+  bookingValue      Float?
+  invoiceValue      Float?
+  capiBookingEventId String?
+  capiInvoiceEventId String?
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  capiEvents CAPIEvent[]
+
+  @@index([accountId, createdAt(sort: Desc)]) // leads list: ordered by date per account
+  @@index([accountId, routingStatus])          // metrics, status filters
+  @@index([campaignId])                        // leads per campaign
+  @@index([stJobId])                           // st-jobs poll: finding leads by ST job ID
+}
+
+// ─── CAPIEvent ────────────────────────────────────────────────────────────────
+// Log of every event fired to Meta CAPI.
+// One lead can generate multiple events over time.
+
+model CAPIEvent {
+  id          String     @id @default(cuid())
+  leadId      String
+  lead        Lead       @relation(fields: [leadId], references: [id])
+  eventName   String
+  eventTime   DateTime
+  value       Float?
+  currency    String     @default("USD")
+  status      CAPIStatus @default(PENDING)
+  metaEventId String?
+  metaAdId    String?
+  metaAdSetId String?
+  error       String?
+  sentAt      DateTime?
+  createdAt   DateTime   @default(now())
+
+  @@index([leadId])
+}
+
+// ─── EmailTemplate ────────────────────────────────────────────────────────────
+// Reusable email templates with merge tag support. Scoped to account.
+
+model EmailTemplate {
+  id        String   @id @default(cuid())
+  accountId String
+  account   Account  @relation(fields: [accountId], references: [id])
+  name      String
+  subject   String
+  body      String
+  blocks    Json?
+  isDefault Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  campaigns Campaign[]
+
+  @@unique([accountId, name])
+}

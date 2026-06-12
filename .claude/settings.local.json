@@ -1,0 +1,42 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx create-next-app@latest *)",
+      "Bash(sudo chown *)",
+      "Bash(npm config *)",
+      "Bash(npm install *)",
+      "Bash(npx prisma *)",
+      "Bash(./node_modules/.bin/prisma init *)",
+      "Bash(node *)",
+      "Bash(npx tsc *)",
+      "Bash(DATABASE_URL=\"postgresql://test:test@localhost:5432/test\" node *)",
+      "Bash(mkdir -p /Users/samrothstein/Documents/formly/src/app/api/leads/\\\\[id\\\\])",
+      "Bash(mkdir -p /Users/samrothstein/Documents/formly/src/app/\\\\\\(dashboard\\\\\\)/leads/\\\\[id\\\\])",
+      "Bash(openssl rand *)",
+      "Bash(DATABASE_URL=\"postgresql://postgres:JukHXBynzHjevUyEnxHuJqPKbibgZzIF@acela.proxy.rlwy.net:17165/railway\" npx prisma *)",
+      "Bash(DATABASE_URL=\"postgresql://postgres:JukHXBynzHjevUyEnxHuJqPKbibgZzIF@acela.proxy.rlwy.net:17165/railway\" npm run *)",
+      "Bash(echo \"exit: $?\")",
+      "Bash(npm run *)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:3000/)",
+      "Bash(echo \"PID: $!\")",
+      "Read(//tmp/**)",
+      "Bash(pkill -f \"next dev\")",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:3000/login)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:3000/connections)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:3000/campaigns)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:3000/leads)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:3000/signup)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:3000/forgot-password)",
+      "Bash(npm list *)",
+      "Bash(curl -s -X POST http://localhost:3000/api/auth/signup -H 'Content-Type: application/json' -d '{\"name\":\"Test User\",\"email\":\"test-debug@formly.dev\",\"password\":\"testpass123\",\"confirmPassword\":\"testpass123\"}')",
+      "Bash(python3 -m json.tool)",
+      "Bash(npm doctor *)",
+      "Bash(DATABASE_URL=\"postgresql://postgres:JukHXBynzHjevUyEnxHuJqPKbibgZzIF@acela.proxy.rlwy.net:17165/railway\" node *)",
+      "Bash(grep -v '^$')",
+      "Bash(npx dotenv *)",
+      "Bash(git -C /Users/samrothstein/Documents/formly status)",
+      "Bash(xargs ls -la)",
+      "Bash(chmod +x *)"
+    ]
+  }
+}
