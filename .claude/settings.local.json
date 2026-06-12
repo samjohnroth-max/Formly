@@ -36,7 +36,9 @@
       "Bash(npx dotenv *)",
       "Bash(git -C /Users/samrothstein/Documents/formly status)",
       "Bash(xargs ls -la)",
-      "Bash(chmod +x *)"
+      "Bash(chmod +x *)",
+      "Bash(git *)",
+      "Bash(npm uninstall *)"
     ]
   }
 }

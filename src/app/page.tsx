@@ -3,6 +3,8 @@ import {
   Zap, BarChart2, Mail, Map, Users, ArrowRight,
   CheckCircle, ChevronRight, Link2, Megaphone, Clock,
 } from "lucide-react";
+import { DotGrid } from "@/components/ui/DotGrid";
+import { FlowGraphic } from "@/components/ui/FlowGraphic";
 
 // ─── Nav ─────────────────────────────────────────────────────────────────────
 
@@ -37,6 +39,9 @@ function Nav() {
 function Hero() {
   return (
     <section className="relative overflow-hidden bg-gray-950 pt-32 pb-24">
+      {/* Dot grid pattern */}
+      <DotGrid dotColor="#ffffff" dotOpacity={0.03} spacing={24} radius={1.5} />
+
       {/* Glow */}
       <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
         <div className="h-[500px] w-[800px] rounded-full bg-blue-600/10 blur-3xl" />
@@ -74,8 +79,13 @@ function Hero() {
           </Link>
         </div>
 
+        {/* Flow graphic */}
+        <div className="mt-10 flex justify-center">
+          <FlowGraphic />
+        </div>
+
         {/* Mini feature list */}
-        <div className="mt-10 flex flex-wrap justify-center gap-x-6 gap-y-2 text-xs text-gray-500">
+        <div className="mt-8 flex flex-wrap justify-center gap-x-6 gap-y-2 text-xs text-gray-500">
           {["No credit card required", "14-day free trial", "Setup in under 10 minutes", "CAPI-compliant"].map((item) => (
             <span key={item} className="flex items-center gap-1.5">
               <CheckCircle className="size-3.5 text-blue-500/70" />

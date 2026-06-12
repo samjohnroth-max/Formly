@@ -2,6 +2,7 @@ import Link from "next/link";
 import { getRequiredSession } from "@/lib/auth/session";
 import { signOut } from "@/lib/auth";
 import { LayoutDashboard, Link2, Megaphone, Users, Mail, Settings, LogOut } from "lucide-react";
+import { ThemeToggle } from "@/components/layout/ThemeToggle";
 
 const NAV = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -16,11 +17,12 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const session = await getRequiredSession();
 
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div className="flex h-screen bg-gray-50 dark:bg-[#0F1117]">
       {/* Sidebar */}
-      <aside className="flex w-56 shrink-0 flex-col border-r border-gray-200 bg-white">
-        <div className="flex h-14 items-center border-b border-gray-200 px-5">
-          <span className="text-base font-bold text-gray-900">Formly</span>
+      <aside className="flex w-56 shrink-0 flex-col border-r border-gray-200 dark:border-[#2A2D3E] bg-gradient-to-b from-[#EEF4FF] to-white dark:from-[#1E2D4A] dark:to-[#1A1D27]">
+        <div className="flex h-14 items-center justify-between border-b border-gray-200 dark:border-[#2A2D3E] px-5">
+          <span className="text-base font-bold text-[#0F4C8F] dark:text-[#3B7DD8]">Formly</span>
+          <ThemeToggle />
         </div>
 
         <nav className="flex-1 space-y-0.5 p-3">
@@ -28,7 +30,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
             <Link
               key={href}
               href={href}
-              className="flex items-center gap-2.5 rounded-md px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+              className="flex items-center gap-2.5 rounded-md px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-[#8B90A0] dark:hover:bg-white/10 dark:hover:text-[#F0F4FF] transition-colors"
             >
               <Icon className="size-4 shrink-0" />
               {label}
@@ -36,10 +38,12 @@ export default async function DashboardLayout({ children }: { children: React.Re
           ))}
         </nav>
 
-        <div className="border-t border-gray-200 p-3">
+        <div className="border-t border-gray-200 dark:border-[#2A2D3E] p-3">
           <div className="mb-2 px-3 py-1">
-            <p className="truncate text-xs font-medium text-gray-900">{session.user?.name ?? "Account"}</p>
-            <p className="truncate text-xs text-gray-500">{session.user?.email}</p>
+            <p className="truncate text-xs font-medium text-gray-900 dark:text-[#F0F4FF]">
+              {session.user?.name ?? "Account"}
+            </p>
+            <p className="truncate text-xs text-gray-500 dark:text-[#8B90A0]">{session.user?.email}</p>
           </div>
           <form
             action={async () => {
@@ -49,7 +53,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
           >
             <button
               type="submit"
-              className="flex w-full items-center gap-2.5 rounded-md px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+              className="flex w-full items-center gap-2.5 rounded-md px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-[#8B90A0] dark:hover:bg-white/10 dark:hover:text-[#F0F4FF] transition-colors"
             >
               <LogOut className="size-4 shrink-0" />
               Sign out

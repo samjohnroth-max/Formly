@@ -51,8 +51,8 @@ export default function ConnectionsPage() {
       {/* Header */}
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-2xl font-semibold text-gray-900">Connections</h1>
-          <p className="mt-1 text-sm text-gray-500">
+          <h1 className="text-2xl font-semibold text-gray-900 dark:text-[#F0F4FF]">Connections</h1>
+          <p className="mt-1 text-sm text-gray-500 dark:text-[#8B90A0]">
             One card per client — each showing their Meta and ServiceTitan connections.
           </p>
         </div>
@@ -76,7 +76,7 @@ export default function ConnectionsPage() {
       {!data ? (
         <div className="space-y-4">
           {[1, 2].map((i) => (
-            <div key={i} className="h-48 animate-pulse rounded-xl bg-gray-100" />
+            <div key={i} className="h-48 animate-pulse rounded-xl bg-gray-100 dark:bg-[#1A1D27]" />
           ))}
         </div>
       ) : data.clients.length === 0 && data.unassigned.metaConnections.length === 0 && data.unassigned.stConnections.length === 0 ? (
@@ -118,9 +118,9 @@ export default function ConnectionsPage() {
 
 function EmptyState({ onAdd }: { onAdd: () => void }) {
   return (
-    <div className="rounded-xl border border-dashed border-gray-300 bg-gray-50 p-12 text-center">
-      <p className="mb-1 text-sm font-medium text-gray-700">No clients yet</p>
-      <p className="mb-4 text-sm text-gray-500">Add your first client to connect their Meta account and ServiceTitan tenant.</p>
+    <div className="rounded-xl border border-dashed border-gray-300 dark:border-[#2A2D3E] bg-gray-50 dark:bg-[#1A1D27] p-12 text-center">
+      <p className="mb-1 text-sm font-medium text-gray-700 dark:text-[#F0F4FF]">No clients yet</p>
+      <p className="mb-4 text-sm text-gray-500 dark:text-[#8B90A0]">Add your first client to connect their Meta account and ServiceTitan tenant.</p>
       <button
         onClick={onAdd}
         className="inline-flex items-center gap-2 rounded-md bg-[#0F4C8F] px-4 py-2 text-sm font-medium text-white hover:bg-[#0D3F7A]"
@@ -149,12 +149,12 @@ function UnassignedSection({
   return (
     <section>
       <div className="mb-3 flex items-center gap-2">
-        <h2 className="text-sm font-semibold text-gray-700">Unassigned connections</h2>
-        <span className="rounded-full bg-gray-200 px-2 py-0.5 text-xs text-gray-600">
+        <h2 className="text-sm font-semibold text-gray-700 dark:text-[#F0F4FF]">Unassigned connections</h2>
+        <span className="rounded-full bg-gray-200 dark:bg-[#2A2D3E] px-2 py-0.5 text-xs text-gray-600 dark:text-[#8B90A0]">
           {metaConnections.length + stConnections.length}
         </span>
       </div>
-      <p className="mb-4 text-xs text-gray-500">
+      <p className="mb-4 text-xs text-gray-500 dark:text-[#8B90A0]">
         These connections aren&apos;t linked to a client yet. Assign them or add a new client.
       </p>
       <div className="space-y-2">
@@ -253,19 +253,19 @@ function AssignDropdown({
       <button
         onClick={() => setOpen((v) => !v)}
         disabled={isPending}
-        className="inline-flex items-center gap-1 rounded-md border border-gray-200 bg-white px-2 py-1 text-xs text-gray-600 hover:bg-gray-50 disabled:opacity-50"
+        className="inline-flex items-center gap-1 rounded-md border border-gray-200 dark:border-[#2A2D3E] bg-white dark:bg-[#1A1D27] px-2 py-1 text-xs text-gray-600 dark:text-[#8B90A0] hover:bg-gray-50 dark:hover:bg-white/10 disabled:opacity-50"
       >
         {isPending ? <Loader2 className="size-3 animate-spin" /> : <ChevronDown className="size-3 opacity-60" />}
         Assign to client
       </button>
 
       {open && (
-        <div className="absolute right-0 z-20 mt-1 min-w-[190px] overflow-hidden rounded-lg border border-gray-200 bg-white shadow-lg">
+        <div className="absolute right-0 z-20 mt-1 min-w-[190px] overflow-hidden rounded-lg border border-gray-200 dark:border-[#2A2D3E] bg-white dark:bg-[#1A1D27] shadow-lg">
           {clients.map((c) => (
             <button
               key={c.id}
               onClick={() => assign(c.id)}
-              className="w-full px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50"
+              className="w-full px-3 py-2 text-left text-sm text-gray-700 dark:text-[#F0F4FF] hover:bg-gray-50 dark:hover:bg-white/10"
             >
               {c.name}
             </button>
@@ -336,14 +336,14 @@ function UnassignedMetaRow({
 }) {
   const [isPending, startTransition] = useTransition();
   return (
-    <div className="flex items-center justify-between rounded-lg border border-gray-200 bg-white px-4 py-3">
+    <div className="flex items-center justify-between rounded-lg border border-gray-200 dark:border-[#2A2D3E] bg-white dark:bg-[#1A1D27] px-4 py-3">
       <div className="flex items-center gap-3">
         <div className="flex size-8 items-center justify-center rounded-lg bg-blue-600">
           <span className="text-xs font-bold text-white">M</span>
         </div>
         <div>
-          <p className="text-sm font-medium text-gray-900">{conn.metaAccountName}</p>
-          <p className="text-xs text-gray-500">
+          <p className="text-sm font-medium text-gray-900 dark:text-[#F0F4FF]">{conn.metaAccountName}</p>
+          <p className="text-xs text-gray-500 dark:text-[#8B90A0]">
             {conn.leadsThisMonth} leads this month · {conn.campaignCount} campaigns
           </p>
         </div>
@@ -396,14 +396,14 @@ function UnassignedSTRow({
   }
 
   return (
-    <div className="flex items-center justify-between rounded-lg border border-gray-200 bg-white px-4 py-3">
+    <div className="flex items-center justify-between rounded-lg border border-gray-200 dark:border-[#2A2D3E] bg-white dark:bg-[#1A1D27] px-4 py-3">
       <div className="flex items-center gap-3">
         <div className="flex size-8 items-center justify-center rounded-lg bg-orange-500">
           <span className="text-xs font-bold text-white">ST</span>
         </div>
         <div>
-          <p className="text-sm font-medium text-gray-900">{conn.tenantName}</p>
-          <p className="text-xs text-gray-500">
+          <p className="text-sm font-medium text-gray-900 dark:text-[#F0F4FF]">{conn.tenantName}</p>
+          <p className="text-xs text-gray-500 dark:text-[#8B90A0]">
             Tenant {conn.tenantId} · {conn.campaignCount} campaigns · {conn.leadsThisMonth} leads this month
           </p>
         </div>

@@ -47,14 +47,14 @@ export default async function CampaignsPage({
     <div className="p-8">
       <div className="mb-6 flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-semibold text-gray-900">Campaigns</h1>
-          <p className="mt-1 text-sm text-gray-500">
+          <h1 className="text-2xl font-semibold text-gray-900 dark:text-[#F0F4FF]">Campaigns</h1>
+          <p className="mt-1 text-sm text-gray-500 dark:text-[#8B90A0]">
             Each campaign links a Meta Instant Form to a ServiceTitan destination.
           </p>
         </div>
         <Link
           href="/campaigns/new"
-          className="inline-flex items-center gap-2 rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+          className="inline-flex items-center gap-2 rounded-md bg-blue-600 dark:bg-[#3B7DD8] px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 dark:hover:bg-[#2E6BBF]"
         >
           <Plus className="size-4" />
           New Campaign
@@ -62,38 +62,38 @@ export default async function CampaignsPage({
       </div>
 
       {searchParams.created && (
-        <div className="mb-4 rounded-lg bg-green-50 px-4 py-3 text-sm text-green-800">
+        <div className="mb-4 rounded-lg bg-green-50 dark:bg-green-500/10 border border-green-200 dark:border-green-500/30 px-4 py-3 text-sm text-green-800 dark:text-green-400">
           Campaign created successfully and is now active.
         </div>
       )}
 
       {campaigns.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-gray-300 bg-gray-50 py-16 text-center">
-          <p className="text-sm font-medium text-gray-900">No campaigns yet</p>
-          <p className="mt-1 text-sm text-gray-500">Create your first campaign to start routing leads.</p>
+        <div className="rounded-xl border border-dashed border-gray-300 dark:border-[#2A2D3E] bg-gray-50 dark:bg-[#1A1D27] py-16 text-center">
+          <p className="text-sm font-medium text-gray-900 dark:text-[#F0F4FF]">No campaigns yet</p>
+          <p className="mt-1 text-sm text-gray-500 dark:text-[#8B90A0]">Create your first campaign to start routing leads.</p>
           <Link
             href="/campaigns/new"
-            className="mt-4 inline-flex items-center gap-2 rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+            className="mt-4 inline-flex items-center gap-2 rounded-md bg-blue-600 dark:bg-[#3B7DD8] px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 dark:hover:bg-[#2E6BBF]"
           >
             <Plus className="size-4" />
             New Campaign
           </Link>
         </div>
       ) : (
-        <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+        <div className="overflow-hidden rounded-xl border border-gray-200 dark:border-[#2A2D3E] bg-white dark:bg-[#1A1D27] shadow-sm">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-gray-200 bg-gray-50">
-                <th className="py-3 pl-6 pr-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">Campaign</th>
-                <th className="px-3 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">Type</th>
-                <th className="px-3 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">ST Tenant</th>
-                <th className="px-3 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">Status</th>
-                <th className="px-3 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">Leads</th>
-                <th className="px-3 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">Created</th>
+              <tr className="border-b border-gray-200 dark:border-[#2A2D3E] bg-gray-50 dark:bg-white/5">
+                <th className="py-3 pl-6 pr-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-[#8B90A0]">Campaign</th>
+                <th className="px-3 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-[#8B90A0]">Type</th>
+                <th className="px-3 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-[#8B90A0]">ST Tenant</th>
+                <th className="px-3 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-[#8B90A0]">Status</th>
+                <th className="px-3 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-[#8B90A0]">Leads</th>
+                <th className="px-3 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-[#8B90A0]">Created</th>
                 <th className="py-3 pl-3 pr-6" />
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100">
+            <tbody className="divide-y divide-gray-100 dark:divide-[#2A2D3E]">
               {campaigns.map((c) => (
                 <CampaignRow
                   key={c.id}

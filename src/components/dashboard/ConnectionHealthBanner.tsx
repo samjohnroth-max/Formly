@@ -34,17 +34,17 @@ export async function ConnectionHealthBanner() {
   if (staleST > 0) parts.push(`${staleST} ServiceTitan ${staleST === 1 ? "tenant" : "tenants"}`);
 
   return (
-    <div className="flex items-center justify-between rounded-lg border border-amber-200 bg-amber-50 px-4 py-3">
+    <div className="flex items-center justify-between rounded-lg border border-amber-200 dark:border-amber-500/30 bg-amber-50 dark:bg-amber-500/10 px-4 py-3">
       <div className="flex items-center gap-2">
-        <AlertTriangle className="size-4 shrink-0 text-amber-600" />
-        <p className="text-sm text-amber-800">
+        <AlertTriangle className="size-4 shrink-0 text-amber-600 dark:text-amber-400" />
+        <p className="text-sm text-amber-800 dark:text-amber-300">
           <span className="font-semibold">{parts.join(" and ")}</span>{" "}
           {total === 1 ? "has" : "have"} gone stale — lead routing may be affected.
         </p>
       </div>
       <Link
         href="/connections"
-        className="shrink-0 rounded-md bg-amber-100 px-3 py-1.5 text-xs font-semibold text-amber-800 hover:bg-amber-200"
+        className="shrink-0 rounded-md bg-amber-100 dark:bg-amber-500/20 px-3 py-1.5 text-xs font-semibold text-amber-800 dark:text-amber-300 hover:bg-amber-200 dark:hover:bg-amber-500/30"
       >
         Fix connections →
       </Link>

@@ -61,7 +61,7 @@ export function ChangePasswordForm() {
       )}
 
       <div>
-        <label htmlFor="currentPassword" className="block text-sm font-medium text-gray-700 mb-1.5">
+        <label htmlFor="currentPassword" className="block text-sm font-medium text-gray-700 dark:text-[#F0F4FF] mb-1.5">
           Current password
         </label>
         <input
@@ -71,12 +71,12 @@ export function ChangePasswordForm() {
           autoComplete="current-password"
           value={currentPassword}
           onChange={(e) => setCurrentPassword(e.target.value)}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#0F4C8F] focus:border-transparent transition-shadow"
+          className="w-full px-3 py-2 border border-gray-300 dark:border-[#2A2D3E] rounded-lg text-sm text-gray-900 dark:text-[#F0F4FF] bg-white dark:bg-[#0F1117] placeholder:text-gray-400 dark:placeholder:text-[#8B90A0] focus:outline-none focus:ring-2 focus:ring-[#0F4C8F] dark:focus:ring-[#3B7DD8] focus:border-transparent transition-shadow"
         />
       </div>
 
       <div>
-        <label htmlFor="newPassword" className="block text-sm font-medium text-gray-700 mb-1.5">
+        <label htmlFor="newPassword" className="block text-sm font-medium text-gray-700 dark:text-[#F0F4FF] mb-1.5">
           New password
         </label>
         <input
@@ -87,12 +87,12 @@ export function ChangePasswordForm() {
           value={newPassword}
           onChange={(e) => setNewPassword(e.target.value)}
           placeholder="Min. 8 characters"
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#0F4C8F] focus:border-transparent transition-shadow"
+          className="w-full px-3 py-2 border border-gray-300 dark:border-[#2A2D3E] rounded-lg text-sm text-gray-900 dark:text-[#F0F4FF] bg-white dark:bg-[#0F1117] placeholder:text-gray-400 dark:placeholder:text-[#8B90A0] focus:outline-none focus:ring-2 focus:ring-[#0F4C8F] dark:focus:ring-[#3B7DD8] focus:border-transparent transition-shadow"
         />
       </div>
 
       <div>
-        <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-1.5">
+        <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 dark:text-[#F0F4FF] mb-1.5">
           Confirm new password
         </label>
         <input
@@ -102,7 +102,7 @@ export function ChangePasswordForm() {
           autoComplete="new-password"
           value={confirmPassword}
           onChange={(e) => setConfirmPassword(e.target.value)}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#0F4C8F] focus:border-transparent transition-shadow"
+          className="w-full px-3 py-2 border border-gray-300 dark:border-[#2A2D3E] rounded-lg text-sm text-gray-900 dark:text-[#F0F4FF] bg-white dark:bg-[#0F1117] placeholder:text-gray-400 dark:placeholder:text-[#8B90A0] focus:outline-none focus:ring-2 focus:ring-[#0F4C8F] dark:focus:ring-[#3B7DD8] focus:border-transparent transition-shadow"
         />
       </div>
 

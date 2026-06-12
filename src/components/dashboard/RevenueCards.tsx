@@ -19,10 +19,10 @@ function getSignalTier(count: number): SignalTier {
 }
 
 const TIER_STYLE: Record<SignalTier, { pill: string; dot: string; label: string }> = {
-  Poor:      { pill: "bg-red-50 text-red-700",     dot: "bg-red-500",    label: "Poor" },
-  Building:  { pill: "bg-amber-50 text-amber-700", dot: "bg-amber-400",  label: "Building" },
-  Strong:    { pill: "bg-blue-50 text-blue-700",   dot: "bg-blue-500",   label: "Strong" },
-  Excellent: { pill: "bg-green-50 text-green-700", dot: "bg-green-500",  label: "Excellent" },
+  Poor:      { pill: "bg-red-50 text-red-700 dark:bg-red-500/10 dark:text-red-400",       dot: "bg-red-500",    label: "Poor" },
+  Building:  { pill: "bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400", dot: "bg-amber-400",  label: "Building" },
+  Strong:    { pill: "bg-blue-50 text-blue-700 dark:bg-blue-500/10 dark:text-blue-400",   dot: "bg-blue-500",   label: "Strong" },
+  Excellent: { pill: "bg-green-50 text-green-700 dark:bg-green-500/10 dark:text-green-400", dot: "bg-green-500",  label: "Excellent" },
 };
 
 const TIER_MESSAGE: Record<SignalTier, string> = {
@@ -42,46 +42,41 @@ export function RevenueCards({ metrics }: { metrics: RevenueMetrics }) {
 
   return (
     <div>
-      <h2 className="mb-3 text-sm font-semibold text-gray-700">Revenue overview — this month</h2>
+      <h2 className="mb-3 text-sm font-semibold text-gray-700 dark:text-[#8B90A0]">Revenue overview — this month</h2>
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
 
-        {/* Total revenue */}
-        <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
-          <div className="mb-3 inline-flex rounded-lg p-2 text-emerald-600 bg-emerald-50">
+        <div className="rounded-xl border border-gray-200 bg-white dark:bg-[#1A1D27] dark:border-[#2A2D3E] p-5 shadow-sm">
+          <div className="mb-3 inline-flex rounded-lg p-2 text-emerald-600 bg-emerald-50 dark:text-emerald-400 dark:bg-emerald-500/10">
             <DollarSign className="size-4" />
           </div>
-          <p className="text-2xl font-bold text-gray-900">{fmt(totalRevenueThisMonth)}</p>
-          <p className="mt-0.5 text-xs text-gray-500">Total revenue this month</p>
+          <p className="text-2xl font-bold text-gray-900 dark:text-[#F0F4FF]">{fmt(totalRevenueThisMonth)}</p>
+          <p className="mt-0.5 text-xs text-gray-500 dark:text-[#8B90A0]">Total revenue this month</p>
         </div>
 
-        {/* Avg job value */}
-        <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
-          <div className="mb-3 inline-flex rounded-lg p-2 text-blue-600 bg-blue-50">
+        <div className="rounded-xl border border-gray-200 bg-white dark:bg-[#1A1D27] dark:border-[#2A2D3E] p-5 shadow-sm">
+          <div className="mb-3 inline-flex rounded-lg p-2 text-blue-600 bg-blue-50 dark:text-blue-400 dark:bg-blue-500/10">
             <Briefcase className="size-4" />
           </div>
-          <p className="text-2xl font-bold text-gray-900">{fmt(avgJobValue)}</p>
-          <p className="mt-0.5 text-xs text-gray-500">Average job value</p>
+          <p className="text-2xl font-bold text-gray-900 dark:text-[#F0F4FF]">{fmt(avgJobValue)}</p>
+          <p className="mt-0.5 text-xs text-gray-500 dark:text-[#8B90A0]">Average job value</p>
         </div>
 
-        {/* Booking rate */}
-        <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
-          <div className="mb-3 inline-flex rounded-lg p-2 text-violet-600 bg-violet-50">
+        <div className="rounded-xl border border-gray-200 bg-white dark:bg-[#1A1D27] dark:border-[#2A2D3E] p-5 shadow-sm">
+          <div className="mb-3 inline-flex rounded-lg p-2 text-violet-600 bg-violet-50 dark:text-violet-400 dark:bg-violet-500/10">
             <TrendingUp className="size-4" />
           </div>
-          <p className="text-2xl font-bold text-gray-900">{bookingRateThisMonth}%</p>
-          <p className="mt-0.5 text-xs text-gray-500">Booking rate this month</p>
+          <p className="text-2xl font-bold text-gray-900 dark:text-[#F0F4FF]">{bookingRateThisMonth}%</p>
+          <p className="mt-0.5 text-xs text-gray-500 dark:text-[#8B90A0]">Booking rate this month</p>
         </div>
 
-        {/* Revenue signal strength */}
-        <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+        <div className="rounded-xl border border-gray-200 bg-white dark:bg-[#1A1D27] dark:border-[#2A2D3E] p-5 shadow-sm">
           <div className="mb-3 flex items-center justify-between">
-            <div className="inline-flex rounded-lg p-2 text-amber-600 bg-amber-50">
+            <div className="inline-flex rounded-lg p-2 text-amber-600 bg-amber-50 dark:text-amber-400 dark:bg-amber-500/10">
               <Zap className="size-4" />
             </div>
-            {/* CSS-only tooltip — no client JS needed */}
             <div className="group relative">
-              <Info className="size-3.5 cursor-help text-gray-400" />
-              <div className="pointer-events-none absolute right-0 top-5 z-10 hidden w-60 rounded-lg border border-gray-200 bg-white p-3 text-xs leading-relaxed text-gray-600 shadow-lg group-hover:block">
+              <Info className="size-3.5 cursor-help text-gray-400 dark:text-[#8B90A0]" />
+              <div className="pointer-events-none absolute right-0 top-5 z-10 hidden w-60 rounded-lg border border-gray-200 dark:border-[#2A2D3E] bg-white dark:bg-[#1A1D27] p-3 text-xs leading-relaxed text-gray-600 dark:text-[#8B90A0] shadow-lg group-hover:block">
                 {TOOLTIP_TEXT}
               </div>
             </div>
@@ -94,9 +89,9 @@ export function RevenueCards({ metrics }: { metrics: RevenueMetrics }) {
             </span>
           </div>
 
-          <p className="mt-1 text-xs font-medium text-gray-700">Revenue signal strength</p>
-          <p className="mt-1.5 text-xs leading-relaxed text-gray-500">{TIER_MESSAGE[tier]}</p>
-          <p className="mt-3 text-xs tabular-nums text-gray-400">
+          <p className="mt-1 text-xs font-medium text-gray-700 dark:text-[#F0F4FF]">Revenue signal strength</p>
+          <p className="mt-1.5 text-xs leading-relaxed text-gray-500 dark:text-[#8B90A0]">{TIER_MESSAGE[tier]}</p>
+          <p className="mt-3 text-xs tabular-nums text-gray-400 dark:text-[#8B90A0]">
             {purchaseEvents30Days.toLocaleString()} Purchase event{purchaseEvents30Days !== 1 ? "s" : ""} · last 30 days
           </p>
         </div>

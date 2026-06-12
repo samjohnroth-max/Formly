@@ -36,7 +36,7 @@ export default async function DashboardPage() {
 
   return (
     <div className="space-y-8 p-8">
-      <h1 className="text-xl font-semibold text-gray-900">Dashboard</h1>
+      <h1 className="text-xl font-semibold text-gray-900 dark:text-[#F0F4FF]">Dashboard</h1>
 
       {/* Connection health warning */}
       <ConnectionHealthBanner />

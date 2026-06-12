@@ -4,6 +4,7 @@ import { getRequiredSession } from "@/lib/auth/session";
 import { db } from "@/lib/db";
 import { ChangePasswordForm } from "./ChangePasswordForm";
 import { SendingDomainSettings } from "./SendingDomainSettings";
+import { ThemeSettingsCard } from "./ThemeSettingsCard";
 
 export const revalidate = 0;
 
@@ -17,29 +18,29 @@ export default async function SettingsPage() {
 
   return (
     <div className="mx-auto max-w-2xl p-8 space-y-6">
-      <h1 className="text-xl font-semibold text-gray-900">Settings</h1>
+      <h1 className="text-xl font-semibold text-gray-900 dark:text-[#F0F4FF]">Settings</h1>
 
       {/* Account info */}
-      <div className="rounded-xl border border-gray-200 bg-white shadow-sm p-6">
-        <h2 className="text-sm font-semibold text-gray-900 mb-4">Account</h2>
+      <div className="rounded-xl border border-gray-200 dark:border-[#2A2D3E] bg-white dark:bg-[#1A1D27] shadow-sm p-6">
+        <h2 className="text-sm font-semibold text-gray-900 dark:text-[#F0F4FF] mb-4">Account</h2>
         <dl className="space-y-3">
           <div className="flex items-center justify-between">
-            <dt className="text-sm text-gray-500">Name</dt>
-            <dd className="text-sm font-medium text-gray-900">{user?.name ?? "—"}</dd>
+            <dt className="text-sm text-gray-500 dark:text-[#8B90A0]">Name</dt>
+            <dd className="text-sm font-medium text-gray-900 dark:text-[#F0F4FF]">{user?.name ?? "—"}</dd>
           </div>
           <div className="flex items-center justify-between">
-            <dt className="text-sm text-gray-500">Email</dt>
-            <dd className="text-sm font-medium text-gray-900">{user?.email ?? "—"}</dd>
+            <dt className="text-sm text-gray-500 dark:text-[#8B90A0]">Email</dt>
+            <dd className="text-sm font-medium text-gray-900 dark:text-[#F0F4FF]">{user?.email ?? "—"}</dd>
           </div>
           <div className="flex items-center justify-between">
-            <dt className="text-sm text-gray-500">Role</dt>
-            <dd className="text-sm font-medium text-gray-900 capitalize">
+            <dt className="text-sm text-gray-500 dark:text-[#8B90A0]">Role</dt>
+            <dd className="text-sm font-medium text-gray-900 dark:text-[#F0F4FF] capitalize">
               {user?.role?.toLowerCase() ?? "—"}
             </dd>
           </div>
           <div className="flex items-center justify-between">
-            <dt className="text-sm text-gray-500">Member since</dt>
-            <dd className="text-sm font-medium text-gray-900">
+            <dt className="text-sm text-gray-500 dark:text-[#8B90A0]">Member since</dt>
+            <dd className="text-sm font-medium text-gray-900 dark:text-[#F0F4FF]">
               {user?.createdAt
                 ? new Intl.DateTimeFormat("en-US", { dateStyle: "medium" }).format(user.createdAt)
                 : "—"}
@@ -48,10 +49,13 @@ export default async function SettingsPage() {
         </dl>
       </div>
 
+      {/* Appearance */}
+      <ThemeSettingsCard />
+
       {/* Change password */}
-      <div className="rounded-xl border border-gray-200 bg-white shadow-sm p-6">
-        <h2 className="text-sm font-semibold text-gray-900 mb-1">Change password</h2>
-        <p className="text-xs text-gray-500 mb-5">You must enter your current password to set a new one.</p>
+      <div className="rounded-xl border border-gray-200 dark:border-[#2A2D3E] bg-white dark:bg-[#1A1D27] shadow-sm p-6">
+        <h2 className="text-sm font-semibold text-gray-900 dark:text-[#F0F4FF] mb-1">Change password</h2>
+        <p className="text-xs text-gray-500 dark:text-[#8B90A0] mb-5">You must enter your current password to set a new one.</p>
         <div className="max-w-sm">
           <ChangePasswordForm />
         </div>
@@ -60,16 +64,16 @@ export default async function SettingsPage() {
       {/* Brand */}
       <Link
         href="/settings/brand"
-        className="flex items-center justify-between rounded-xl border border-gray-200 bg-white shadow-sm p-6 hover:bg-gray-50 transition-colors group"
+        className="flex items-center justify-between rounded-xl border border-gray-200 dark:border-[#2A2D3E] bg-white dark:bg-[#1A1D27] shadow-sm p-6 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors group"
       >
         <div>
-          <h2 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
-            <Palette className="size-4 text-gray-500" />
+          <h2 className="text-sm font-semibold text-gray-900 dark:text-[#F0F4FF] flex items-center gap-2">
+            <Palette className="size-4 text-gray-500 dark:text-[#8B90A0]" />
             Brand settings
           </h2>
-          <p className="mt-1 text-xs text-gray-500">Logo, colors, fonts, and email footer for all templates.</p>
+          <p className="mt-1 text-xs text-gray-500 dark:text-[#8B90A0]">Logo, colors, fonts, and email footer for all templates.</p>
         </div>
-        <span className="text-xs text-blue-600 group-hover:underline">Configure →</span>
+        <span className="text-xs text-blue-600 dark:text-[#3B7DD8] group-hover:underline">Configure →</span>
       </Link>
 
       {/* Email sending domain */}
