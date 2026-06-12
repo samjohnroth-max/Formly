@@ -5,7 +5,9 @@ set -e
 # This ensures schema is current before the web app or workers connect.
 echo "[start] Running database migrations..."
 npm run db:migrate
-echo "[start] Migrations complete. Starting all services..."
+echo "[start] Seeding default data..."
+npm run db:seed
+echo "[start] Seed complete. Starting all services..."
 
 # Launch all three processes under concurrently.
 # --kill-others-on-fail: if any process exits with a non-zero code,
