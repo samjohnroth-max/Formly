@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import bcrypt from "bcryptjs";
+import { hash, compare } from "bcryptjs";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { z } from "zod";
@@ -40,7 +40,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const valid = await bcrypt.compare(currentPassword, user.password);
+    const valid = await compare(currentPassword, user.password);
     if (!valid) {
       return NextResponse.json(
         { error: "Current password is incorrect." },
@@ -48,7 +48,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const passwordHash = await bcrypt.hash(newPassword, 12);
+    const passwordHash = await hash(newPassword, 12);
     await db.user.update({
       where: { id: session.user.id },
       data: { password: passwordHash },

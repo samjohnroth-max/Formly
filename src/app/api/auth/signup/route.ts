@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import bcrypt from "bcryptjs";
+import { hash } from "bcryptjs";
 import { db } from "@/lib/db";
 import { z } from "zod";
 
@@ -37,7 +37,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const passwordHash = await bcrypt.hash(password, 12);
+    const passwordHash = await hash(password, 12);
 
     await db.$transaction(async (tx) => {
       const account = await tx.account.create({
