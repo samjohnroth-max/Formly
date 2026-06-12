@@ -9,6 +9,11 @@ export const authConfig = {
   },
   providers: [],
   callbacks: {
+    authorized() {
+      // Let the custom middleware handler own all redirect logic.
+      // Returning true here means NextAuth never redirects on its own.
+      return true;
+    },
     jwt({ token, user }) {
       if (user) {
         token.id = user.id;
