@@ -61,6 +61,13 @@ enum EmailStatus {
   SKIPPED
 }
 
+enum TriggerType {
+  IMMEDIATE
+  HOURS_AFTER
+  BOOKING_CONFIRMED
+  JOB_COMPLETE
+}
+
 enum CAPIStatus {
   PENDING
   SENT
@@ -256,9 +263,10 @@ model Campaign {
   createdAt        DateTime        @default(now())
   updatedAt        DateTime        @updatedAt
 
-  fieldMappings FieldMapping[]
-  leads         Lead[]
-  adSpends      MonthlyAdSpend[]
+  fieldMappings   FieldMapping[]
+  leads           Lead[]
+  adSpends        MonthlyAdSpend[]
+  emailSequences  CampaignEmailSequence[]
 
   @@index([accountId])
   @@index([metaFormId, status]) // hot path: queried on every incoming lead
@@ -386,9 +394,30 @@ model EmailTemplate {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  campaigns Campaign[]
+  campaigns      Campaign[]
+  sequenceSteps  CampaignEmailSequence[]
 
   @@unique([accountId, name])
+}
+
+// ─── CampaignEmailSequence ────────────────────────────────────────────────────
+// Up to 5 email steps per campaign, each with an independent trigger and template.
+
+model CampaignEmailSequence {
+  id              String        @id @default(cuid())
+  campaignId      String
+  campaign        Campaign      @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  stepNumber      Int
+  triggerType     TriggerType
+  triggerDelay    Int           @default(0)
+  emailTemplateId String?
+  emailTemplate   EmailTemplate? @relation(fields: [emailTemplateId], references: [id])
+  enabled         Boolean       @default(true)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  @@unique([campaignId, stepNumber])
+  @@index([campaignId])
 }
 
 // ─── BrandSettings ────────────────────────────────────────────────────────────

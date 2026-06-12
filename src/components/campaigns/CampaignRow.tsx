@@ -1,8 +1,9 @@
 "use client";
 
+import Link from "next/link";
 import { useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Pause, Play, Archive, Loader2, Download } from "lucide-react";
+import { Pause, Play, Archive, Loader2, Download, Settings } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
 import type { CampaignStatus, DestinationType } from "@/types/db";
@@ -79,6 +80,13 @@ export function CampaignRow({
             <Loader2 className="size-4 animate-spin text-gray-400" />
           ) : (
             <>
+              <Link
+                href={`/campaigns/${id}`}
+                title="Campaign settings & email sequence"
+                className="rounded p-1.5 text-gray-500 hover:text-gray-900"
+              >
+                <Settings className="size-3.5" />
+              </Link>
               <a
                 href={`/api/leads/export?campaignId=${id}`}
                 title="Export leads as CSV"
