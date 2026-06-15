@@ -242,7 +242,7 @@ export function DashboardFilters({
               )}
 
               {showCustom && (
-                <div className="absolute left-0 top-full z-30 mt-1.5 w-64 rounded-xl border border-gray-200 dark:border-[#2A2D3E] bg-white dark:bg-[#1A1D27] p-4 shadow-lg">
+                <div className="absolute left-0 bottom-full z-50 mb-1.5 w-64 rounded-xl border border-gray-200 dark:border-[#2A2D3E] bg-white dark:bg-[#1A1D27] p-4 shadow-lg">
                   <div className="flex gap-3">
                     <div className="flex-1">
                       <label className="block text-xs font-medium text-gray-500 dark:text-[#8B90A0] mb-1">From</label>
@@ -305,7 +305,7 @@ export function DashboardFilters({
             </button>
 
             {showClients && (
-              <div className="absolute left-0 top-full z-30 mt-1.5 w-52 rounded-xl border border-gray-200 dark:border-[#2A2D3E] bg-white dark:bg-[#1A1D27] shadow-lg overflow-hidden">
+              <div className="absolute left-0 bottom-full z-50 mb-1.5 w-52 rounded-xl border border-gray-200 dark:border-[#2A2D3E] bg-white dark:bg-[#1A1D27] shadow-lg overflow-hidden">
                 <div className="p-1 max-h-56 overflow-y-auto">
                   <button
                     onClick={() => setPendingClientIds([])}
@@ -372,7 +372,7 @@ export function DashboardFilters({
             </button>
 
             {showCampaigns && (
-              <div className="absolute left-0 top-full z-30 mt-1.5 w-56 rounded-xl border border-gray-200 dark:border-[#2A2D3E] bg-white dark:bg-[#1A1D27] shadow-lg overflow-hidden">
+              <div className="absolute left-0 bottom-full z-50 mb-1.5 w-56 rounded-xl border border-gray-200 dark:border-[#2A2D3E] bg-white dark:bg-[#1A1D27] shadow-lg overflow-hidden">
                 <div className="p-1 max-h-60 overflow-y-auto">
                   <button
                     onClick={() => setPendingCampaignIds([])}
