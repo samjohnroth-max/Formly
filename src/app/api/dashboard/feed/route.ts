@@ -14,16 +14,20 @@ export async function GET(req: NextRequest) {
   const { searchParams } = req.nextUrl;
   const startStr = searchParams.get("start");
   const endStr = searchParams.get("end");
+  const campaignIdsStr = searchParams.get("campaignIds");
 
   const dateFilter: { gte?: Date; lte?: Date } = {};
   if (startStr) dateFilter.gte = new Date(startStr);
   if (endStr) dateFilter.lte = new Date(endStr);
+
+  const campaignIds = campaignIdsStr ? campaignIdsStr.split(",").filter(Boolean) : null;
 
   const [leads, serviceArea] = await Promise.all([
     db.lead.findMany({
       where: {
         accountId: user.accountId,
         ...(Object.keys(dateFilter).length > 0 ? { createdAt: dateFilter } : {}),
+        ...(campaignIds ? { campaignId: { in: campaignIds } } : {}),
       },
       orderBy: { createdAt: "desc" },
       take: 50,

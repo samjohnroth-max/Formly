@@ -3,7 +3,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
 import dynamic from "next/dynamic";
-import { LeadFeed } from "./LeadFeed";
 import { RefreshCw } from "lucide-react";
 
 const LeadMap = dynamic(
@@ -49,12 +48,13 @@ export function DashboardLive() {
       const start = searchParams.get("start");
       const end = searchParams.get("end");
       const range = searchParams.get("range");
+      const campaignIds = searchParams.get("campaignIds");
 
-      // Only filter by date when a specific range is active
       if (range && range !== "all") {
         if (start) params.set("start", start);
         if (end) params.set("end", end);
       }
+      if (campaignIds) params.set("campaignIds", campaignIds);
 
       const url = `/api/dashboard/feed${params.size > 0 ? `?${params}` : ""}`;
       const res = await fetch(url);
@@ -75,9 +75,9 @@ export function DashboardLive() {
   }, [fetchLeads]);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <h2 className="text-sm font-semibold text-gray-700 dark:text-[#8B90A0]">Lead activity</h2>
+        <h2 className="text-sm font-semibold text-gray-700 dark:text-[#8B90A0]">Lead map</h2>
         <div className="flex items-center gap-2 text-xs text-gray-400 dark:text-[#8B90A0]">
           <RefreshCw className="size-3" />
           Updated {lastUpdated.toLocaleTimeString()} · refreshes every 30s
@@ -89,17 +89,6 @@ export function DashboardLive() {
       ) : (
         <LeadMap leads={leads} serviceArea={serviceArea} />
       )}
-
-      <div>
-        <h2 className="mb-3 text-sm font-semibold text-gray-700 dark:text-[#8B90A0]">
-          Last {leads.length} leads
-        </h2>
-        {loading ? (
-          <div className="h-40 animate-pulse rounded-xl bg-gray-100 dark:bg-[#1A1D27]" />
-        ) : (
-          <LeadFeed leads={leads} />
-        )}
-      </div>
     </div>
   );
 }

@@ -7,13 +7,15 @@ import { ConnectionHealthBanner } from "@/components/dashboard/ConnectionHealthB
 import { RevenueCards } from "@/components/dashboard/RevenueCards";
 import { CAPISignalHealth } from "@/components/dashboard/CAPISignalHealth";
 import { CampaignPerformanceTable } from "@/components/dashboard/CampaignPerformanceTable";
-import { DateRangeFilter } from "@/components/dashboard/DateRangeFilter";
+import { DashboardFilters } from "@/components/dashboard/DashboardFilters";
 import {
   fetchRoutingMetrics,
   fetchRevenueMetrics,
   fetchCAPIHealth,
   fetchCampaignPerformance,
   fetchOutOfAreaMetrics,
+  fetchClientList,
+  fetchCampaignList,
 } from "./data";
 import { FormlyPattern } from "@/components/brand/FormlyPattern";
 import { parseDateRangeParams, getPeriodKey, formatRangeLabel } from "@/lib/dashboard/dateRange";
@@ -21,7 +23,13 @@ import { parseDateRangeParams, getPeriodKey, formatRangeLabel } from "@/lib/dash
 export const revalidate = 0;
 
 interface PageProps {
-  searchParams: { range?: string; start?: string; end?: string };
+  searchParams: {
+    range?: string;
+    start?: string;
+    end?: string;
+    clientIds?: string;
+    campaignIds?: string;
+  };
 }
 
 export default async function DashboardPage({ searchParams }: PageProps) {
@@ -41,17 +49,43 @@ export default async function DashboardPage({ searchParams }: PageProps) {
   const periodKey = getPeriodKey(dateRange);
   const rangeLabel = formatRangeLabel(dateRange);
 
-  const [routing, revenue, capiHealth, campaignPerf, outOfArea] = await Promise.all([
-    accountId
-      ? fetchRoutingMetrics(accountId, dateRange)
-      : Promise.resolve({ totalLeads: 0, bookedLeads: 0, soldJobs: 0, bookingRate: 0 }),
-    accountId
-      ? fetchRevenueMetrics(accountId, dateRange)
-      : Promise.resolve({ totalRevenueThisMonth: 0, avgJobValue: 0, bookingRateThisMonth: 0, purchaseEvents30Days: 0 }),
-    accountId ? fetchCAPIHealth(accountId, dateRange) : Promise.resolve([]),
-    accountId ? fetchCampaignPerformance(accountId, dateRange) : Promise.resolve([]),
-    accountId ? fetchOutOfAreaMetrics(accountId, dateRange) : Promise.resolve({ outOfAreaThisMonth: 0, outOfAreaPct: 0 }),
-  ]);
+  // Parse client/campaign filter params
+  const currentClientIds = searchParams.clientIds?.split(",").filter(Boolean) ?? [];
+  const currentCampaignIds = searchParams.campaignIds?.split(",").filter(Boolean) ?? [];
+
+  // Effective campaign IDs for data fetching:
+  // - campaignIds param present → use directly
+  // - only clientIds → resolve to those clients' campaigns
+  // - neither → undefined (no filter)
+  let effectiveCampaignIds: string[] | undefined;
+  if (currentCampaignIds.length > 0) {
+    effectiveCampaignIds = currentCampaignIds;
+  } else if (currentClientIds.length > 0 && accountId) {
+    const clientCampaigns = await db.campaign.findMany({
+      where: {
+        accountId,
+        status: { not: "ARCHIVED" },
+        metaConnection: { groupId: { in: currentClientIds } },
+      },
+      select: { id: true },
+    });
+    effectiveCampaignIds = clientCampaigns.map((c) => c.id);
+  }
+
+  const [routing, revenue, capiHealth, campaignPerf, outOfArea, allClients, allCampaigns] =
+    await Promise.all([
+      accountId
+        ? fetchRoutingMetrics(accountId, dateRange, effectiveCampaignIds)
+        : Promise.resolve({ totalLeads: 0, bookedLeads: 0, soldJobs: 0, bookingRate: 0 }),
+      accountId
+        ? fetchRevenueMetrics(accountId, dateRange, effectiveCampaignIds)
+        : Promise.resolve({ totalRevenueThisMonth: 0, avgJobValue: 0, bookingRateThisMonth: 0, purchaseEvents30Days: 0 }),
+      accountId ? fetchCAPIHealth(accountId, dateRange, effectiveCampaignIds) : Promise.resolve([]),
+      accountId ? fetchCampaignPerformance(accountId, dateRange, effectiveCampaignIds) : Promise.resolve([]),
+      accountId ? fetchOutOfAreaMetrics(accountId, dateRange, effectiveCampaignIds) : Promise.resolve({ outOfAreaThisMonth: 0, outOfAreaPct: 0 }),
+      accountId ? fetchClientList(accountId) : Promise.resolve([]),
+      accountId ? fetchCampaignList(accountId) : Promise.resolve([]),
+    ]);
 
   return (
     <div className="space-y-8 p-8">
@@ -64,12 +98,16 @@ export default async function DashboardPage({ searchParams }: PageProps) {
         </div>
       </div>
 
-      {/* Date range filter */}
+      {/* Filter bar: date range + client + campaign */}
       <Suspense fallback={null}>
-        <DateRangeFilter
+        <DashboardFilters
           currentPreset={dateRange.preset}
           currentStart={dateRange.startStr}
           currentEnd={dateRange.endStr}
+          currentClientIds={currentClientIds}
+          currentCampaignIds={currentCampaignIds}
+          clients={allClients}
+          campaigns={allCampaigns}
         />
       </Suspense>
 
@@ -82,13 +120,13 @@ export default async function DashboardPage({ searchParams }: PageProps) {
       {/* Revenue metrics */}
       <RevenueCards metrics={revenue} />
 
-      {/* Live lead feed */}
+      {/* Lead map */}
       <DashboardLive />
 
       {/* CAPI signal health */}
       <CAPISignalHealth rows={capiHealth} />
 
-      {/* Campaign performance — includes summary cards, sortable table, inline ad spend, export */}
+      {/* Campaign performance */}
       <CampaignPerformanceTable
         rows={campaignPerf}
         periodKey={periodKey}
