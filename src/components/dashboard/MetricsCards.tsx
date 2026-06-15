@@ -1,42 +1,35 @@
-import { Zap, CheckCircle, TrendingUp, Clock, MapPin } from "lucide-react";
-import type { OutOfAreaMetrics } from "@/app/(dashboard)/dashboard/data";
-
-interface Metrics {
-  leadsToday: number;
-  successToday: number;
-  successRate: number;
-  avgRoutingSec: number;
-}
+import { Users, Briefcase, DollarSign, TrendingUp, MapPin } from "lucide-react";
+import type { RoutingMetrics, OutOfAreaMetrics } from "@/app/(dashboard)/dashboard/data";
 
 interface Props {
-  metrics: Metrics;
+  metrics: RoutingMetrics;
   outOfArea?: OutOfAreaMetrics;
 }
 
 export function MetricsCards({ metrics, outOfArea }: Props) {
   const cards = [
     {
-      label: "Leads today",
-      value: metrics.leadsToday.toLocaleString(),
-      icon: Zap,
+      label: "Leads",
+      value: metrics.totalLeads.toLocaleString(),
+      icon: Users,
       color: "text-blue-600 bg-blue-50 dark:text-blue-400 dark:bg-blue-500/10",
     },
     {
-      label: "Routed successfully today",
-      value: metrics.successToday.toLocaleString(),
-      icon: CheckCircle,
-      color: "text-green-600 bg-green-50 dark:text-green-400 dark:bg-green-500/10",
+      label: "Booked",
+      value: metrics.bookedLeads.toLocaleString(),
+      icon: Briefcase,
+      color: "text-emerald-600 bg-emerald-50 dark:text-emerald-400 dark:bg-emerald-500/10",
     },
     {
-      label: "Success rate (30 days)",
-      value: `${metrics.successRate}%`,
-      icon: TrendingUp,
+      label: "Sold jobs",
+      value: metrics.soldJobs.toLocaleString(),
+      icon: DollarSign,
       color: "text-purple-600 bg-purple-50 dark:text-purple-400 dark:bg-purple-500/10",
     },
     {
-      label: "Avg routing time",
-      value: metrics.avgRoutingSec > 0 ? `${metrics.avgRoutingSec}s` : "—",
-      icon: Clock,
+      label: "Booking rate",
+      value: `${metrics.bookingRate}%`,
+      icon: TrendingUp,
       color: "text-amber-600 bg-amber-50 dark:text-amber-400 dark:bg-amber-500/10",
     },
   ];
@@ -65,7 +58,7 @@ export function MetricsCards({ metrics, outOfArea }: Props) {
             {outOfArea.outOfAreaThisMonth}
           </p>
           <p className="mt-0.5 text-xs text-gray-500 dark:text-[#8B90A0]">
-            Out of area — this month
+            Out of area
             {outOfArea.outOfAreaPct > 0 && (
               <span className="ml-1 text-rose-500 dark:text-rose-400">({outOfArea.outOfAreaPct}%)</span>
             )}

@@ -39,7 +39,7 @@ export default async function DashboardPage({ searchParams }: PageProps) {
   const [routing, revenue, capiHealth, campaignPerf, outOfArea] = await Promise.all([
     accountId
       ? fetchRoutingMetrics(accountId, dateRange)
-      : Promise.resolve({ leadsToday: 0, successToday: 0, successRate: 0, avgRoutingSec: 0 }),
+      : Promise.resolve({ totalLeads: 0, bookedLeads: 0, soldJobs: 0, bookingRate: 0 }),
     accountId
       ? fetchRevenueMetrics(accountId, dateRange)
       : Promise.resolve({ totalRevenueThisMonth: 0, avgJobValue: 0, bookingRateThisMonth: 0, purchaseEvents30Days: 0 }),

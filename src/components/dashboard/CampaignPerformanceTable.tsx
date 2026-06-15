@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { Fragment, useState, useTransition } from "react";
 import { ChevronUp, ChevronDown, Download, Info, CheckCircle2 } from "lucide-react";
 import { Sparkline } from "./Sparkline";
 import type { CampaignPerfRow } from "@/app/(dashboard)/dashboard/data";
@@ -10,12 +10,11 @@ type SortKey =
   | "name"
   | "leadsThisMonth"
   | "bookedJobs"
-  | "bookingRate"
+  | "soldJobs"
+  | "conversionRate"
   | "totalRevenue"
-  | "avgJobValue"
   | "adSpend"
-  | "roas"
-  | "capiEventsSent";
+  | "roas";
 
 function fmtCurrency(n: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(n);
@@ -26,7 +25,7 @@ function fmtRoas(r: number | null) {
   return `${r.toFixed(2)}x`;
 }
 
-function bookingRateClass(rate: number) {
+function conversionClass(rate: number) {
   if (rate >= 50) return "text-emerald-600 dark:text-emerald-400 font-semibold";
   if (rate >= 25) return "text-amber-600 dark:text-amber-400";
   return "text-red-500 dark:text-red-400";
@@ -46,46 +45,52 @@ function generateCSV(rows: CampaignPerfRow[], rangeLabel: string): string {
   lines.push(`Period: ${rangeLabel}`);
   lines.push("");
   lines.push("Campaign Summary");
-  lines.push("Campaign,Leads,Booked Jobs,Booking Rate,Revenue,Avg Job Value,Ad Spend,ROAS,CAPI Events,Status");
+  lines.push("Campaign,Leads,Booked,Sold Jobs,Conversion Rate,Revenue,Avg Job Value,Ad Spend,ROAS,CAPI Leads,CAPI Schedule,CAPI Purchase,Status");
 
   for (const r of rows) {
     lines.push([
       `"${r.name}"`,
       r.leadsThisMonth,
       r.bookedJobs,
-      `${r.bookingRate}%`,
+      r.soldJobs,
+      `${r.conversionRate}%`,
       r.totalRevenue.toFixed(2),
       r.avgJobValue.toFixed(2),
       r.adSpend.toFixed(2),
       r.roas !== null ? `${r.roas.toFixed(2)}x` : "-",
-      r.capiEventsSent,
+      r.leadEvents,
+      r.scheduleEvents,
+      r.purchaseEvents,
       r.campaignStatus,
     ].join(","));
   }
 
-  // Totals row
   const totalLeads = rows.reduce((s, r) => s + r.leadsThisMonth, 0);
   const totalBooked = rows.reduce((s, r) => s + r.bookedJobs, 0);
+  const totalSold = rows.reduce((s, r) => s + r.soldJobs, 0);
   const totalRevenue = rows.reduce((s, r) => s + r.totalRevenue, 0);
   const totalSpend = rows.reduce((s, r) => s + r.adSpend, 0);
   const blendedRoas = totalSpend > 0 ? totalRevenue / totalSpend : null;
+
   lines.push([
     "TOTAL",
     totalLeads,
     totalBooked,
-    totalLeads > 0 ? `${Math.round((totalBooked / totalLeads) * 100)}%` : "0%",
+    totalSold,
+    totalLeads > 0 ? `${Math.round((totalSold / totalLeads) * 100)}%` : "0%",
     totalRevenue.toFixed(2),
-    totalBooked > 0 ? (totalRevenue / totalBooked).toFixed(2) : "0.00",
+    totalSold > 0 ? (totalRevenue / totalSold).toFixed(2) : "0.00",
     totalSpend.toFixed(2),
     blendedRoas !== null ? `${blendedRoas.toFixed(2)}x` : "-",
-    rows.reduce((s, r) => s + r.capiEventsSent, 0),
+    rows.reduce((s, r) => s + r.leadEvents, 0),
+    rows.reduce((s, r) => s + r.scheduleEvents, 0),
+    rows.reduce((s, r) => s + r.purchaseEvents, 0),
     "",
   ].join(","));
 
   lines.push("");
   lines.push("Daily Lead Breakdown");
   lines.push("Campaign,Date,Leads");
-
   for (const r of rows) {
     for (const day of r.dailyLeads) {
       lines.push([`"${r.name}"`, day.date, day.count].join(","));
@@ -97,8 +102,8 @@ function generateCSV(rows: CampaignPerfRow[], rangeLabel: string): string {
 
 interface Props {
   rows: CampaignPerfRow[];
-  periodKey: string;   // "YYYY-MM" for ad spend saving
-  rangeLabel: string;  // human-readable for CSV filename + display
+  periodKey: string;
+  rangeLabel: string;
 }
 
 export function CampaignPerformanceTable({ rows, periodKey, rangeLabel }: Props) {
@@ -119,7 +124,6 @@ export function CampaignPerformanceTable({ rows, periodKey, rangeLabel }: Props)
     }
   }
 
-  // Merge localSpend overrides (optimistic updates after saving)
   const displayRows = rows.map((r) => {
     const spend = localSpend[r.id] !== undefined ? localSpend[r.id] : r.adSpend;
     const roas = spend > 0 ? r.totalRevenue / spend : null;
@@ -136,15 +140,21 @@ export function CampaignPerformanceTable({ rows, periodKey, rangeLabel }: Props)
     return dir === "asc" ? cmp : -cmp;
   });
 
-  // Totals
   const totalLeads = displayRows.reduce((s, r) => s + r.leadsThisMonth, 0);
   const totalBooked = displayRows.reduce((s, r) => s + r.bookedJobs, 0);
+  const totalSold = displayRows.reduce((s, r) => s + r.soldJobs, 0);
   const totalRevenue = displayRows.reduce((s, r) => s + r.totalRevenue, 0);
   const totalSpend = displayRows.reduce((s, r) => s + r.adSpend, 0);
-  const totalCapi = displayRows.reduce((s, r) => s + r.capiEventsSent, 0);
+  const totalLeadEvents = displayRows.reduce((s, r) => s + r.leadEvents, 0);
+  const totalScheduleEvents = displayRows.reduce((s, r) => s + r.scheduleEvents, 0);
+  const totalPurchaseEvents = displayRows.reduce((s, r) => s + r.purchaseEvents, 0);
   const blendedRoas = totalSpend > 0 ? totalRevenue / totalSpend : null;
-  const blendedBooking = totalLeads > 0 ? Math.round((totalBooked / totalLeads) * 100) : 0;
-  const totalAvgJob = totalBooked > 0 ? totalRevenue / totalBooked : 0;
+  const blendedConversion = totalLeads > 0 ? Math.round((totalSold / totalLeads) * 100) : 0;
+
+  // Funnel percentages
+  const bookedPct = totalLeads > 0 ? Math.round((totalBooked / totalLeads) * 100) : 0;
+  const soldOfBooked = totalBooked > 0 ? Math.round((totalSold / totalBooked) * 100) : 0;
+  const soldPct = totalLeads > 0 ? Math.round((totalSold / totalLeads) * 100) : 0;
 
   async function saveSpend(campaignId: string, valueStr: string) {
     setSaveError(null);
@@ -227,19 +237,40 @@ export function CampaignPerformanceTable({ rows, periodKey, rangeLabel }: Props)
 
   return (
     <div className="space-y-4">
-      {/* Summary cards */}
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        {[
-          { label: "Total leads", value: totalLeads.toLocaleString() },
-          { label: "Total revenue", value: fmtCurrency(totalRevenue) },
-          { label: "Total ad spend", value: fmtCurrency(totalSpend) },
-          { label: "Blended ROAS", value: fmtRoas(blendedRoas) },
-        ].map(({ label, value }) => (
-          <div key={label} className="rounded-xl border border-gray-200 dark:border-[#2A2D3E] bg-white dark:bg-[#1A1D27] px-4 py-3 shadow-sm">
-            <p className="text-lg font-bold text-gray-900 dark:text-[#F0F4FF]">{value}</p>
-            <p className="text-xs text-gray-500 dark:text-[#8B90A0] mt-0.5">{label}</p>
-          </div>
-        ))}
+      {/* Sales funnel */}
+      <div className="rounded-xl border border-gray-200 dark:border-[#2A2D3E] bg-white dark:bg-[#1A1D27] p-5 shadow-sm">
+        <p className="mb-4 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-[#8B90A0]">
+          Sales funnel — {rangeLabel.toLowerCase()}
+        </p>
+        <div className="flex items-stretch">
+          {[
+            { label: "Leads", value: totalLeads.toLocaleString(), fill: 100, bg: "bg-[#0F4C8F]" },
+            { label: "Booked", value: totalBooked.toLocaleString(), fill: bookedPct, bg: "bg-[#0d6b8a]" },
+            { label: "Sold jobs", value: totalSold.toLocaleString(), fill: soldPct, bg: "bg-[#0a8870]" },
+            { label: "Revenue", value: fmtCurrency(totalRevenue), fill: soldPct, bg: "bg-[#0f9860]" },
+          ].map((stage, i) => (
+            <Fragment key={stage.label}>
+              {i > 0 && (
+                <div className="flex flex-col items-center justify-center px-2 shrink-0">
+                  <span className="text-gray-200 dark:text-[#2A2D3E] text-xl font-light">→</span>
+                  <span className="text-[10px] text-gray-400 dark:text-[#8B90A0] tabular-nums">
+                    {i === 1 ? `${bookedPct}%` : i === 2 ? `${soldOfBooked}%` : ""}
+                  </span>
+                </div>
+              )}
+              <div className={`flex-1 rounded-lg px-4 py-3 ${stage.bg} text-white min-w-0`}>
+                <p className="text-xl font-bold tabular-nums leading-tight truncate">{stage.value}</p>
+                <p className="text-xs opacity-75 mt-0.5">{stage.label}</p>
+                <div className="mt-3 h-1.5 rounded-full bg-white/20">
+                  <div
+                    className="h-full rounded-full bg-white/50"
+                    style={{ width: `${stage.fill}%` }}
+                  />
+                </div>
+              </div>
+            </Fragment>
+          ))}
+        </div>
       </div>
 
       {/* Table header */}
@@ -256,22 +287,25 @@ export function CampaignPerformanceTable({ rows, periodKey, rangeLabel }: Props)
         </button>
       </div>
 
-      {saveError && (
-        <p className="text-xs text-red-500 px-1">{saveError}</p>
-      )}
+      {saveError && <p className="text-xs text-red-500 px-1">{saveError}</p>}
 
       {/* Table */}
       <div className="overflow-hidden rounded-xl border border-gray-200 dark:border-[#2A2D3E] bg-white dark:bg-[#1A1D27] shadow-sm">
         <div className="overflow-x-auto">
-          <table className="w-full text-sm min-w-[900px]">
+          <table className="w-full text-sm min-w-[860px]">
             <thead>
               <tr className="border-b border-gray-100 dark:border-[#2A2D3E] bg-gray-50 dark:bg-white/5">
                 <Th col="name" label="Campaign" />
                 <Th col="leadsThisMonth" label="Leads" right />
                 <Th col="bookedJobs" label="Booked" right />
-                <Th col="bookingRate" label="Booked %" right />
+                <Th col="soldJobs" label="Sold" right />
+                <Th
+                  col="conversionRate"
+                  label="Conv %"
+                  right
+                  tooltip="Conversion rate = Sold jobs ÷ Leads × 100. This is your real money metric — the percentage of leads that result in completed, invoiced jobs."
+                />
                 <Th col="totalRevenue" label="Revenue" right />
-                <Th col="avgJobValue" label="Avg job" right />
                 <Th
                   col="adSpend"
                   label="Ad spend"
@@ -282,11 +316,10 @@ export function CampaignPerformanceTable({ rows, periodKey, rangeLabel }: Props)
                   col="roas"
                   label="ROAS"
                   right
-                  tooltip="Return on Ad Spend = Revenue ÷ Ad Spend. A 3x ROAS means for every $1 spent on ads you generated $3 in booked revenue. Formly calculates this using actual invoice amounts from ServiceTitan."
+                  tooltip="Return on Ad Spend = Revenue ÷ Ad Spend. A 3x ROAS means $3 in revenue for every $1 spent. Calculated from actual invoice values in ServiceTitan."
                 />
-                <Th col="capiEventsSent" label="CAPI" right />
                 <th className="py-3 pl-3 pr-5 text-right text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-[#8B90A0]">
-                  7d trend
+                  CAPI signals
                 </th>
               </tr>
             </thead>
@@ -323,14 +356,14 @@ export function CampaignPerformanceTable({ rows, periodKey, rangeLabel }: Props)
                     <td className="px-3 py-3 text-right tabular-nums text-gray-700 dark:text-[#F0F4FF]">
                       {r.bookedJobs}
                     </td>
+                    <td className="px-3 py-3 text-right tabular-nums text-gray-700 dark:text-[#F0F4FF]">
+                      {r.soldJobs}
+                    </td>
                     <td className="px-3 py-3 text-right tabular-nums">
-                      <span className={bookingRateClass(r.bookingRate)}>{r.bookingRate}%</span>
+                      <span className={conversionClass(r.conversionRate)}>{r.conversionRate}%</span>
                     </td>
                     <td className="px-3 py-3 text-right tabular-nums text-gray-700 dark:text-[#F0F4FF]">
                       {fmtCurrency(r.totalRevenue)}
-                    </td>
-                    <td className="px-3 py-3 text-right tabular-nums text-gray-500 dark:text-[#8B90A0]">
-                      {r.avgJobValue > 0 ? fmtCurrency(r.avgJobValue) : "—"}
                     </td>
                     {/* Ad spend — inline editable */}
                     <td className="px-3 py-3 text-right">
@@ -359,9 +392,7 @@ export function CampaignPerformanceTable({ rows, periodKey, rangeLabel }: Props)
                           className="inline-flex items-center gap-1 tabular-nums hover:text-[#0F4C8F] dark:hover:text-[#3B7DD8] transition-colors"
                           title="Click to edit ad spend"
                         >
-                          {saved === r.id && (
-                            <CheckCircle2 className="size-3 text-emerald-500 shrink-0" />
-                          )}
+                          {saved === r.id && <CheckCircle2 className="size-3 text-emerald-500 shrink-0" />}
                           {r.adSpend > 0
                             ? <span className="text-gray-700 dark:text-[#F0F4FF] underline decoration-dashed underline-offset-2">{fmtCurrency(r.adSpend)}</span>
                             : <span className="text-gray-300 dark:text-[#2A2D3E] text-xs">Enter spend</span>
@@ -372,17 +403,15 @@ export function CampaignPerformanceTable({ rows, periodKey, rangeLabel }: Props)
                     <td className="px-3 py-3 text-right tabular-nums">
                       <span className={roasClass(r.roas)}>{fmtRoas(r.roas)}</span>
                     </td>
-                    <td className="px-3 py-3 text-right tabular-nums text-gray-500 dark:text-[#8B90A0]">
-                      {r.capiEventsSent}
-                    </td>
-                    {/* 7-day revenue trend sparkline */}
+                    {/* CAPI mini funnel: L · S · P */}
                     <td className="py-3 pl-3 pr-5 text-right">
-                      <Sparkline
-                        values={r.revenueTrend}
-                        width={72}
-                        height={22}
-                        className="text-[#0F4C8F] dark:text-[#3B7DD8] ml-auto"
-                      />
+                      <div className="text-[11px] tabular-nums">
+                        <span className="text-blue-600 dark:text-blue-400 font-medium">L {r.leadEvents}</span>
+                        <span className="text-gray-300 dark:text-[#2A2D3E]"> · </span>
+                        <span className="text-amber-600 dark:text-amber-400">S {r.scheduleEvents}</span>
+                        <span className="text-gray-300 dark:text-[#2A2D3E]"> · </span>
+                        <span className="text-emerald-600 dark:text-emerald-400">P {r.purchaseEvents}</span>
+                      </div>
                     </td>
                   </tr>
                 );
@@ -395,19 +424,24 @@ export function CampaignPerformanceTable({ rows, periodKey, rangeLabel }: Props)
                 </td>
                 <td className="px-3 py-3 text-right tabular-nums text-gray-900 dark:text-[#F0F4FF]">{totalLeads}</td>
                 <td className="px-3 py-3 text-right tabular-nums text-gray-900 dark:text-[#F0F4FF]">{totalBooked}</td>
+                <td className="px-3 py-3 text-right tabular-nums text-gray-900 dark:text-[#F0F4FF]">{totalSold}</td>
                 <td className="px-3 py-3 text-right tabular-nums">
-                  <span className={bookingRateClass(blendedBooking)}>{blendedBooking}%</span>
+                  <span className={conversionClass(blendedConversion)}>{blendedConversion}%</span>
                 </td>
                 <td className="px-3 py-3 text-right tabular-nums text-gray-900 dark:text-[#F0F4FF]">{fmtCurrency(totalRevenue)}</td>
-                <td className="px-3 py-3 text-right tabular-nums text-gray-500 dark:text-[#8B90A0]">
-                  {totalBooked > 0 ? fmtCurrency(totalAvgJob) : "—"}
-                </td>
                 <td className="px-3 py-3 text-right tabular-nums text-gray-900 dark:text-[#F0F4FF]">{fmtCurrency(totalSpend)}</td>
                 <td className="px-3 py-3 text-right tabular-nums">
                   <span className={roasClass(blendedRoas)}>{fmtRoas(blendedRoas)}</span>
                 </td>
-                <td className="px-3 py-3 text-right tabular-nums text-gray-500 dark:text-[#8B90A0]">{totalCapi}</td>
-                <td className="py-3 pl-3 pr-5" />
+                <td className="py-3 pl-3 pr-5 text-right">
+                  <div className="text-[11px] tabular-nums">
+                    <span className="text-blue-600 dark:text-blue-400 font-medium">L {totalLeadEvents}</span>
+                    <span className="text-gray-300 dark:text-[#2A2D3E]"> · </span>
+                    <span className="text-amber-600 dark:text-amber-400">S {totalScheduleEvents}</span>
+                    <span className="text-gray-300 dark:text-[#2A2D3E]"> · </span>
+                    <span className="text-emerald-600 dark:text-emerald-400">P {totalPurchaseEvents}</span>
+                  </div>
+                </td>
               </tr>
             </tbody>
           </table>

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { X, AlertTriangle } from "lucide-react";
+import { signOut } from "next-auth/react";
 import { useDemo } from "./DemoContext";
 
 export function DemoBanner() {
@@ -16,7 +17,7 @@ export function DemoBanner() {
       <div className="flex items-center gap-2">
         <AlertTriangle className="size-4 shrink-0 text-amber-900" />
         <p className="text-xs font-medium text-amber-900">
-          You&apos;re viewing a demo account with sample data. Nothing you do here affects real accounts.
+          You&apos;re viewing a demo account — data resets every 24 hours
         </p>
       </div>
       <div className="flex items-center gap-3 shrink-0">
@@ -26,6 +27,13 @@ export function DemoBanner() {
         >
           Sign up free →
         </Link>
+        <button
+          type="button"
+          onClick={() => signOut({ callbackUrl: "/" })}
+          className="rounded-full border border-white px-3 py-1 text-xs font-semibold text-white hover:bg-amber-500 transition-colors"
+        >
+          ← Return to homepage
+        </button>
         <button
           type="button"
           onClick={() => setDismissed(true)}

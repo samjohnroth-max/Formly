@@ -10,10 +10,10 @@ export interface OutOfAreaMetrics {
 }
 
 export interface RoutingMetrics {
-  leadsToday: number;
-  successToday: number;
-  successRate: number;
-  avgRoutingSec: number;
+  totalLeads: number;
+  bookedLeads: number;
+  soldJobs: number;
+  bookingRate: number;
 }
 
 export interface RevenueMetrics {
@@ -39,15 +39,20 @@ export interface CampaignPerfRow {
   campaignStatus: string;
   leadsThisMonth: number;
   bookedJobs: number;
+  soldJobs: number;
+  conversionRate: number; // soldJobs / leads * 100
   bookingRate: number;
   totalRevenue: number;
   avgJobValue: number;
+  leadEvents: number;     // CAPI Lead events
+  scheduleEvents: number; // CAPI Schedule events
+  purchaseEvents: number; // CAPI Purchase events
   capiEventsSent: number;
   adSpend: number;
   roas: number | null;
-  leadTrend: number[]; // 7-day lead volume sparkline, oldest→newest
-  revenueTrend: number[]; // 7-day revenue sparkline, oldest→newest
-  dailyLeads: Array<{ date: string; count: number }>; // for export
+  leadTrend: number[];
+  revenueTrend: number[];
+  dailyLeads: Array<{ date: string; count: number }>;
 }
 
 export interface AdSpendMonth {
@@ -85,33 +90,18 @@ export async function fetchRoutingMetrics(
   range?: DateRange
 ): Promise<RoutingMetrics> {
   const rangeStart = range?.start ?? daysAgo(30);
-  const rangeEnd = range?.end;
+  const rangeEnd = range?.end ?? new Date();
 
-  const rangeFilter = {
-    gte: rangeStart,
-    ...(rangeEnd ? { lte: rangeEnd } : {}),
-  };
+  const rangeFilter = { gte: rangeStart, lte: rangeEnd };
 
-  const [leadsToday, successToday, leadsRange, successRange, routingTimes] =
-    await Promise.all([
-      db.lead.count({ where: { accountId, createdAt: { gte: todayStart() } } }),
-      db.lead.count({ where: { accountId, routingStatus: "SUCCESS", createdAt: { gte: todayStart() } } }),
-      db.lead.count({ where: { accountId, createdAt: rangeFilter } }),
-      db.lead.count({ where: { accountId, routingStatus: "SUCCESS", createdAt: rangeFilter } }),
-      db.lead.findMany({
-        where: { accountId, routingStatus: "SUCCESS", createdAt: rangeFilter },
-        select: { createdAt: true, updatedAt: true },
-      }),
-    ]);
+  const [totalLeads, bookedLeads, soldJobs] = await Promise.all([
+    db.lead.count({ where: { accountId, createdAt: rangeFilter } }),
+    db.lead.count({ where: { accountId, stJobId: { not: null }, createdAt: rangeFilter } }),
+    db.lead.count({ where: { accountId, invoiceValue: { gt: 0 }, createdAt: rangeFilter } }),
+  ]);
 
-  const successRate = leadsRange > 0 ? Math.round((successRange / leadsRange) * 100) : 0;
-  const avgMs =
-    routingTimes.length > 0
-      ? routingTimes.reduce((s, l) => s + (l.updatedAt.getTime() - l.createdAt.getTime()), 0) /
-        routingTimes.length
-      : 0;
-
-  return { leadsToday, successToday, successRate, avgRoutingSec: Math.round(avgMs / 1000) };
+  const bookingRate = totalLeads > 0 ? Math.round((bookedLeads / totalLeads) * 100) : 0;
+  return { totalLeads, bookedLeads, soldJobs, bookingRate };
 }
 
 export async function fetchRevenueMetrics(
@@ -199,6 +189,9 @@ export async function fetchCampaignPerformance(
 
   const rangeFilter = { gte: rangeStart, lte: rangeEnd };
 
+  // For ad spend: include any month that overlaps the range (not just months within it)
+  const spendMonthStart = new Date(rangeStart.getFullYear(), rangeStart.getMonth(), 1);
+
   const [campaigns, leadsRange, capiEvents, adSpends] = await Promise.all([
     db.campaign.findMany({
       where: { accountId, status: { not: "ARCHIVED" } },
@@ -211,10 +204,10 @@ export async function fetchCampaignPerformance(
     }),
     db.cAPIEvent.findMany({
       where: { status: "SENT", createdAt: rangeFilter, lead: { accountId } },
-      select: { lead: { select: { campaignId: true } } },
+      select: { eventName: true, lead: { select: { campaignId: true } } },
     }),
     db.monthlyAdSpend.findMany({
-      where: { campaign: { accountId }, month: { gte: rangeStart, lte: rangeEnd } },
+      where: { campaign: { accountId }, month: { gte: spendMonthStart, lte: rangeEnd } },
     }),
   ]);
 
@@ -224,10 +217,18 @@ export async function fetchCampaignPerformance(
     const leads = leadsRange.filter((l) => l.campaignId === c.id);
     const booked = leads.filter((l) => l.stJobId).length;
     const invoiced = leads.filter((l) => l.invoiceValue && l.invoiceValue > 0);
+    const soldJobs = invoiced.length;
     const totalRevenue = invoiced.reduce((s, l) => s + (l.invoiceValue ?? 0), 0);
-    const avgJobValue = invoiced.length > 0 ? totalRevenue / invoiced.length : 0;
+    const avgJobValue = soldJobs > 0 ? totalRevenue / soldJobs : 0;
     const bookingRate = leads.length > 0 ? Math.round((booked / leads.length) * 100) : 0;
-    const capiEventsSent = capiEvents.filter((e) => e.lead.campaignId === c.id).length;
+    const conversionRate = leads.length > 0 ? Math.round((soldJobs / leads.length) * 100) : 0;
+
+    // CAPI events per type
+    const campaignEvents = capiEvents.filter((e) => e.lead.campaignId === c.id);
+    const leadEvents = campaignEvents.filter((e) => e.eventName === "Lead").length;
+    const scheduleEvents = campaignEvents.filter((e) => e.eventName === "Schedule").length;
+    const purchaseEvents = campaignEvents.filter((e) => e.eventName === "Purchase").length;
+    const capiEventsSent = campaignEvents.length;
 
     // Ad spend & ROAS
     const campaignSpends = adSpends.filter((s) => s.campaignId === c.id);
@@ -270,9 +271,14 @@ export async function fetchCampaignPerformance(
       campaignStatus: c.status,
       leadsThisMonth: leads.length,
       bookedJobs: booked,
+      soldJobs,
+      conversionRate,
       bookingRate,
       totalRevenue,
       avgJobValue,
+      leadEvents,
+      scheduleEvents,
+      purchaseEvents,
       capiEventsSent,
       adSpend,
       roas,

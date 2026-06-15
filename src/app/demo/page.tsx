@@ -21,7 +21,8 @@ export default function DemoPage() {
         setError("Demo account is not available right now. Please try again in a moment.");
         return;
       }
-      router.push("/dashboard");
+      // replace instead of push so back button skips /demo and returns to wherever they came from
+      router.replace("/dashboard");
     });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
