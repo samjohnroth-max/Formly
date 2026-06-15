@@ -17,6 +17,7 @@ export interface MetaConnSummary {
   id: string;
   metaAccountName: string;
   pixelId: string | null;
+  datasetId: string | null;
   status: ConnectionStatus;
   createdAt: Date | string;
   campaignCount: number;
@@ -86,12 +87,14 @@ function MetaSlot({
   clientId: string;
   onRefresh: () => void;
 }) {
-  const [showPixel, setShowPixel] = useState(!conn.pixelId && conn.status === "ACTIVE");
+  const [showEditCapi, setShowEditCapi] = useState(!conn.pixelId);
   const [pixelInput, setPixelInput] = useState(conn.pixelId ?? "");
-  const [datasetInput, setDatasetInput] = useState("");
+  const [datasetInput, setDatasetInput] = useState(conn.datasetId ?? "");
   const [savingPixel, setSavingPixel] = useState(false);
   const [pixelError, setPixelError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+
+  const capiActive = !!conn.pixelId;
 
   async function savePixel() {
     setSavingPixel(true);
@@ -106,7 +109,7 @@ function MetaSlot({
       const d = await res.json();
       setPixelError(d.error ?? "Failed to save");
     } else {
-      setShowPixel(false);
+      setShowEditCapi(false);
       onRefresh();
     }
   }
@@ -125,47 +128,96 @@ function MetaSlot({
             <span>{conn.leadsThisMonth} leads this month</span>
             <span>·</span>
             <span>{conn.campaignCount} {conn.campaignCount === 1 ? "campaign" : "campaigns"}</span>
-            {conn.pixelId && (
-              <>
-                <span>·</span>
-                <span className="flex items-center gap-0.5 text-emerald-600">
-                  <Zap className="size-3" />
-                  Pixel {conn.pixelId}
-                </span>
-              </>
-            )}
           </div>
         </div>
         <StatusBadge status={conn.status} />
       </div>
 
+      {/* CAPI section — always visible */}
+      <div className="mt-2.5 rounded-md border border-gray-100 bg-gray-50 p-2.5">
+        <div className="flex items-center justify-between gap-2">
+          {capiActive ? (
+            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700 ring-1 ring-inset ring-emerald-600/20">
+              <Zap className="size-3" /> CAPI active
+            </span>
+          ) : (
+            <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700 ring-1 ring-inset ring-amber-600/20">
+              <Zap className="size-3" /> CAPI disabled
+            </span>
+          )}
+          {capiActive && !showEditCapi && (
+            <button
+              onClick={() => setShowEditCapi(true)}
+              className="text-xs text-gray-400 hover:text-gray-600"
+            >
+              Edit
+            </button>
+          )}
+        </div>
+
+        {capiActive && !showEditCapi && (
+          <div className="mt-1.5 space-y-0.5 text-xs text-gray-500">
+            <p>Pixel: <span className="font-mono text-gray-700">{conn.pixelId}</span></p>
+            {conn.datasetId && (
+              <p>Dataset: <span className="font-mono text-gray-700">{conn.datasetId}</span></p>
+            )}
+          </div>
+        )}
+
+        {(!capiActive || showEditCapi) && (
+          <div className="mt-2 space-y-1.5">
+            {!capiActive && (
+              <p className="text-xs text-amber-700">Add your Pixel ID to enable CAPI revenue attribution.</p>
+            )}
+            <input
+              type="text"
+              value={pixelInput}
+              onChange={(e) => setPixelInput(e.target.value)}
+              placeholder="Pixel ID (e.g. 1234567890)"
+              className="w-full rounded border border-gray-200 bg-white px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-blue-400"
+            />
+            <input
+              type="text"
+              value={datasetInput}
+              onChange={(e) => setDatasetInput(e.target.value)}
+              placeholder="Dataset ID (optional)"
+              className="w-full rounded border border-gray-200 bg-white px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-blue-400"
+            />
+            <div className="flex items-center gap-1.5">
+              <button
+                onClick={savePixel}
+                disabled={savingPixel || !pixelInput.trim()}
+                className="rounded bg-blue-600 px-2.5 py-1 text-xs font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+              >
+                {savingPixel ? "Saving…" : "Save"}
+              </button>
+              {capiActive && (
+                <button
+                  onClick={() => {
+                    setShowEditCapi(false);
+                    setPixelInput(conn.pixelId ?? "");
+                    setDatasetInput(conn.datasetId ?? "");
+                  }}
+                  className="rounded px-2 py-1 text-xs text-gray-500 hover:bg-gray-100"
+                >
+                  Cancel
+                </button>
+              )}
+              {pixelError && <span className="text-xs text-red-600">{pixelError}</span>}
+            </div>
+          </div>
+        )}
+      </div>
+
       {/* Actions */}
       <div className="mt-2 flex flex-wrap items-center gap-1.5">
-        {isInactive ? (
+        {isInactive && (
           <a
             href={`/api/integrations/meta/connect?groupId=${clientId}`}
             className="inline-flex items-center gap-1 rounded-md bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700 hover:bg-blue-100"
           >
             <RefreshCw className="size-3" /> Reconnect
           </a>
-        ) : (
-          <>
-            {conn.pixelId ? (
-              <button
-                onClick={() => setShowPixel((v) => !v)}
-                className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs text-gray-600 hover:bg-gray-100"
-              >
-                <Zap className="size-3" /> Edit Pixel
-              </button>
-            ) : (
-              <button
-                onClick={() => setShowPixel(true)}
-                className="inline-flex items-center gap-1 rounded-md bg-amber-50 px-2 py-1 text-xs font-medium text-amber-700 hover:bg-amber-100"
-              >
-                <Zap className="size-3" /> Add Pixel
-              </button>
-            )}
-          </>
         )}
         {conn.status !== "DISCONNECTED" && (
           <button
@@ -178,42 +230,6 @@ function MetaSlot({
           </button>
         )}
       </div>
-
-      {/* Pixel form */}
-      {showPixel && (
-        <div className="mt-3 rounded-md border border-amber-200 bg-amber-50 p-3">
-          <p className="mb-2 text-xs font-medium text-amber-800">Meta Pixel ID — required for CAPI revenue attribution</p>
-          <div className="flex gap-2">
-            <input
-              type="text"
-              value={pixelInput}
-              onChange={(e) => setPixelInput(e.target.value)}
-              placeholder="Pixel ID (e.g. 1234567890)"
-              className="flex-1 rounded border border-amber-200 bg-white px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-amber-400"
-            />
-            <input
-              type="text"
-              value={datasetInput}
-              onChange={(e) => setDatasetInput(e.target.value)}
-              placeholder="Dataset ID (optional)"
-              className="flex-1 rounded border border-amber-200 bg-white px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-amber-400"
-            />
-            <button
-              onClick={savePixel}
-              disabled={savingPixel || !pixelInput.trim()}
-              className="rounded bg-amber-600 px-2 py-1 text-xs font-medium text-white hover:bg-amber-700 disabled:opacity-50"
-            >
-              {savingPixel ? "…" : "Save"}
-            </button>
-            {conn.pixelId && (
-              <button onClick={() => setShowPixel(false)} className="rounded px-2 py-1 text-xs text-gray-500 hover:bg-gray-100">
-                Cancel
-              </button>
-            )}
-          </div>
-          {pixelError && <p className="mt-1 text-xs text-red-600">{pixelError}</p>}
-        </div>
-      )}
     </div>
   );
 }

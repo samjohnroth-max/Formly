@@ -31,9 +31,9 @@ export async function GET(req: Request) {
       select: { id: true, name: true },
     });
 
-    const hvac     = campaigns.find((c) => c.name === "HVAC Summer Deals");
-    const plumbing = campaigns.find((c) => c.name === "Plumbing Emergency");
-    const roofing  = campaigns.find((c) => c.name === "Roofing Estimate");
+    const hvac     = campaigns.find((c) => c.name === "Apex HVAC");
+    const plumbing = campaigns.find((c) => c.name === "Summit Plumbing");
+    const roofing  = campaigns.find((c) => c.name === "Ridgeline Roofing");
 
     if (!hvac || !plumbing || !roofing) {
       return NextResponse.json({ ok: false, error: "Demo campaigns not found — run the seed first" }, { status: 404 });

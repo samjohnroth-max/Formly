@@ -30,8 +30,8 @@ export async function POST(_: Request, { params }: { params: { id: string } }) {
 
   const body = renderBlocksToHtml(branded, brandedConfig, brand);
 
-  await db.emailTemplate.update({
-    where: { id: params.id },
+  await db.emailTemplate.updateMany({
+    where: { id: params.id, accountId },
     data: { blocks: branded as unknown as object[], config: brandedConfig as unknown as object, body },
   });
 

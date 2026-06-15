@@ -41,7 +41,7 @@ export async function GET() {
         name: true,
         createdAt: true,
         metaConnections: {
-          select: { id: true, metaAccountName: true, pixelId: true, status: true, createdAt: true, _count: { select: { campaigns: true } } },
+          select: { id: true, metaAccountName: true, pixelId: true, datasetId: true, status: true, createdAt: true, _count: { select: { campaigns: true } } },
           orderBy: { createdAt: "asc" },
         },
         stConnections: {
@@ -53,7 +53,7 @@ export async function GET() {
     }),
     db.metaConnection.findMany({
       where: { accountId, groupId: null },
-      select: { id: true, metaAccountName: true, pixelId: true, status: true, createdAt: true, _count: { select: { campaigns: true } } },
+      select: { id: true, metaAccountName: true, pixelId: true, datasetId: true, status: true, createdAt: true, _count: { select: { campaigns: true } } },
       orderBy: { createdAt: "desc" },
     }),
     db.sTConnection.findMany({
@@ -78,6 +78,7 @@ export async function GET() {
     id: c.id,
     metaAccountName: c.metaAccountName,
     pixelId: c.pixelId,
+    datasetId: c.datasetId,
     status: c.status,
     createdAt: c.createdAt,
     campaignCount: c._count.campaigns,
