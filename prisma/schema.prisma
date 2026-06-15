@@ -38,6 +38,7 @@ enum DestinationType {
   BOOKING
   LEAD
   FOLLOWUP
+  ESTIMATE
 }
 
 enum CampaignStatus {
@@ -103,7 +104,7 @@ model Account {
   leads           Lead[]
   templates       EmailTemplate[]
   users           User[]
-  brandSettings   BrandSettings?
+  brandSettings   BrandSettings[]
   serviceArea     ServiceArea?
   supportTickets  SupportTicket[]
 
@@ -124,6 +125,7 @@ model Client {
 
   metaConnections MetaConnection[]
   stConnections   STConnection[]
+  brandSettings   BrandSettings[]
 }
 
 // ─── User ─────────────────────────────────────────────────────────────────────
@@ -434,8 +436,11 @@ model CampaignEmailSequence {
 
 model BrandSettings {
   id             String   @id @default(cuid())
-  accountId      String   @unique
+  accountId      String
   account        Account  @relation(fields: [accountId], references: [id])
+  clientId       String?
+  client         Client?  @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  replyToEmail   String?
   companyName    String   @default("")
   primaryColor   String   @default("#2563eb")
   secondaryColor String   @default("#f3f4f6")
@@ -445,6 +450,9 @@ model BrandSettings {
   footerText     String   @default("")
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
+
+  // Uniqueness enforced via partial DB indexes in migration (see 20260614000000_brand_settings_multi_client)
+  @@index([accountId, clientId])
 }
 
 // ─── ServiceArea ──────────────────────────────────────────────────────────────

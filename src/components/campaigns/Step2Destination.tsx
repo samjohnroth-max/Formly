@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Loader2, Briefcase, UserCheck, Phone } from "lucide-react";
+import { Loader2, Briefcase, UserCheck, Phone, FileText } from "lucide-react";
 import type { WizardState, DestinationType } from "@/types/db";
 import type { STJobType, STBusinessUnit } from "@/lib/servicetitan/catalog";
 import { Tooltip } from "@/components/ui/Tooltip";
@@ -29,6 +29,7 @@ const DESTINATION_OPTIONS: Array<{
   { value: "BOOKING", label: "Booking", description: "Creates a job in ServiceTitan with job type, business unit, and optional assignment.", icon: Briefcase },
   { value: "LEAD", label: "Lead", description: "Creates a lead record with a CSR assignment and optional follow-up days.", icon: UserCheck },
   { value: "FOLLOWUP", label: "Follow-up", description: "Looks up customer by phone/email. Adds a task if match found, falls back to Lead if not.", icon: Phone },
+  { value: "ESTIMATE", label: "Estimate", description: "Routes the lead for an estimate request. Tracks estimate → job conversion in ServiceTitan and feeds a Schedule CAPI event when booked.", icon: FileText },
 ];
 
 export function Step2Destination({ state, onChange, stConnections }: Props) {

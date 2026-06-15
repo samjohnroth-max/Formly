@@ -4,7 +4,6 @@ import {
   CheckCircle, ChevronRight, Link2, Megaphone, Clock,
 } from "lucide-react";
 import { DotGrid } from "@/components/ui/DotGrid";
-import { FlowGraphic } from "@/components/ui/FlowGraphic";
 import { FormlyLogo } from "@/components/brand/FormlyLogo";
 import { FormlyPattern } from "@/components/brand/FormlyPattern";
 
@@ -40,43 +39,40 @@ function Nav() {
 
 function Hero() {
   return (
-    <section className="relative overflow-hidden bg-gray-950 pt-32 pb-24">
-      {/* Dot grid pattern */}
+    <section className="relative overflow-hidden bg-gray-950 pt-32 pb-0">
       <DotGrid dotColor="#ffffff" dotOpacity={0.03} spacing={24} radius={1.5} />
-      {/* Formly mark pattern overlay */}
       <FormlyPattern color="#ffffff" opacity={0.03} spacing={48} />
 
-      {/* Glow */}
       <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-        <div className="h-[500px] w-[800px] rounded-full bg-blue-600/10 blur-3xl" />
+        <div className="h-[500px] w-[800px] rounded-full bg-teal-600/10 blur-3xl" />
       </div>
 
-      <div className="relative mx-auto max-w-4xl px-6 text-center">
-        {/* Brand wordmark */}
+      <div className="relative mx-auto max-w-4xl px-6 pb-16 text-center">
         <div className="flex justify-center mb-8">
           <FormlyLogo size="xl" variant="white" />
         </div>
 
-        <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-blue-500/30 bg-blue-500/10 px-4 py-1.5 text-xs font-medium text-blue-400">
+        <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-teal-500/30 bg-teal-500/10 px-4 py-1.5 text-xs font-medium text-teal-400">
           <Zap className="size-3" />
-          Meta Instant Forms → ServiceTitan · Real-time
+          Built for ServiceTitan businesses
         </div>
 
         <h1 className="mb-6 text-5xl font-bold leading-tight tracking-tight text-white sm:text-6xl">
-          Meta leads routed to<br />
-          <span className="text-blue-400">ServiceTitan in seconds.</span>
+          More booked jobs<br />
+          <span style={{ color: "#1D9E75" }}>from your Meta ads.</span>
         </h1>
 
         <p className="mx-auto mb-10 max-w-2xl text-lg leading-relaxed text-gray-400">
-          Formly connects your Meta Instant Forms directly to ServiceTitan —
-          creating bookings, firing CAPI signals, and sending branded follow-up
-          emails automatically. No Zapier. No manual entry. No missed leads.
+          Formly connects your Meta Instant Forms directly to ServiceTitan — routing
+          leads in seconds, sending branded follow-ups automatically, and feeding real
+          revenue data back to Meta so your campaigns get smarter every week.
         </p>
 
         <div className="flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
           <Link
             href="/signup"
-            className="flex items-center gap-2 rounded-full bg-blue-600 px-8 py-3.5 text-sm font-semibold text-white hover:bg-blue-500 transition-colors"
+            className="flex items-center gap-2 rounded-full px-8 py-3.5 text-sm font-semibold text-white transition-opacity hover:opacity-90"
+            style={{ backgroundColor: "#1D9E75" }}
           >
             Start free trial <ArrowRight className="size-4" />
           </Link>
@@ -88,33 +84,34 @@ function Hero() {
           </Link>
         </div>
 
-        {/* Flow graphic */}
-        <div className="mt-10 flex justify-center">
-          <FlowGraphic />
-        </div>
-
-        {/* Mini feature list */}
-        <div className="mt-8 flex flex-wrap justify-center gap-x-6 gap-y-2 text-xs text-gray-500">
-          {["No credit card required", "14-day free trial", "Setup in under 10 minutes", "CAPI-compliant"].map((item) => (
-            <span key={item} className="flex items-center gap-1.5">
-              <CheckCircle className="size-3.5 text-blue-500/70" />
+        <div className="mt-8 flex flex-wrap justify-center gap-2">
+          {[
+            "Leads routed in under 3 seconds",
+            "14-day free trial",
+            "No Zapier needed",
+            "Campaigns that improve automatically",
+          ].map((item) => (
+            <span
+              key={item}
+              className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-gray-400"
+            >
+              <CheckCircle className="size-3 shrink-0 text-teal-500/70" />
               {item}
             </span>
           ))}
         </div>
       </div>
 
-      {/* Dashboard mockup */}
-      <div className="relative mx-auto mt-16 max-w-5xl px-6">
+      {/* Browser mockup */}
+      <div className="relative mx-auto max-w-5xl px-6">
         <div className="overflow-hidden rounded-xl border border-white/10 bg-gray-900 shadow-2xl shadow-black/50">
           <div className="flex items-center gap-1.5 border-b border-white/10 bg-gray-800/50 px-4 py-3">
             <div className="h-2.5 w-2.5 rounded-full bg-red-500/70" />
             <div className="h-2.5 w-2.5 rounded-full bg-yellow-500/70" />
             <div className="h-2.5 w-2.5 rounded-full bg-green-500/70" />
-            <span className="ml-3 text-xs text-gray-500">formly-production.up.railway.app/dashboard</span>
+            <span className="ml-3 text-xs text-gray-500">app.formly.io/dashboard</span>
           </div>
           <div className="grid grid-cols-4 gap-0 divide-x divide-white/5">
-            {/* Fake sidebar */}
             <div className="col-span-1 border-r border-white/5 bg-gray-900 p-4 space-y-1">
               <div className="mb-4 text-sm font-bold text-white">Formly</div>
               {["Dashboard", "Connections", "Campaigns", "Leads", "Templates", "Settings"].map((item, i) => (
@@ -124,14 +121,13 @@ function Hero() {
                 </div>
               ))}
             </div>
-            {/* Fake dashboard content */}
             <div className="col-span-3 p-5 space-y-4">
               <div className="grid grid-cols-4 gap-3">
                 {[
-                  { label: "Total leads", value: "1,284" },
-                  { label: "Bookings created", value: "847" },
+                  { label: "Leads", value: "1,284" },
+                  { label: "Booked", value: "847" },
+                  { label: "Sold jobs", value: "612" },
                   { label: "Booking rate", value: "65.9%" },
-                  { label: "Revenue tracked", value: "$184,200" },
                 ].map((stat) => (
                   <div key={stat.label} className="rounded-lg bg-white/5 p-3">
                     <p className="text-[10px] text-gray-400">{stat.label}</p>
@@ -155,6 +151,139 @@ function Hero() {
                     </div>
                   ))}
                 </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Before / After comparison strip */}
+      <div className="relative mx-auto mt-8 max-w-5xl px-6 pb-20">
+        <div className="grid grid-cols-2 gap-4">
+          <div className="rounded-xl border border-white/10 bg-white/[0.03] p-6">
+            <p className="mb-4 text-xs font-semibold uppercase tracking-widest text-gray-500">Without Formly</p>
+            <ul className="space-y-3">
+              {[
+                "Lead sits in Meta Lead Center for hours",
+                "Someone manually copies data into ServiceTitan",
+                "No follow-up — lead goes cold",
+                "No revenue data fed back to Meta",
+                "Campaigns optimize for clicks, not bookings",
+              ].map((item) => (
+                <li key={item} className="flex items-start gap-2.5 text-sm text-gray-500">
+                  <span className="mt-0.5 shrink-0 text-red-500/70">✕</span>
+                  {item}
+                </li>
+              ))}
+            </ul>
+          </div>
+          <div className="rounded-xl border p-6" style={{ borderColor: "#1D9E7533", backgroundColor: "#1D9E7508" }}>
+            <p className="mb-4 text-xs font-semibold uppercase tracking-widest" style={{ color: "#1D9E75" }}>With Formly</p>
+            <ul className="space-y-3">
+              {[
+                "Lead routed to ServiceTitan in under 3 seconds",
+                "Booking created automatically — no manual entry",
+                "Branded follow-up email sent within 60 seconds",
+                "Revenue data fed back to Meta CAPI automatically",
+                "Campaigns learn from real jobs booked and closed",
+              ].map((item) => (
+                <li key={item} className="flex items-start gap-2.5 text-sm text-gray-300">
+                  <span className="mt-0.5 shrink-0" style={{ color: "#1D9E75" }}>✓</span>
+                  {item}
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ─── CAPI Performance ─────────────────────────────────────────────────────────
+
+function CAPIPerformance() {
+  const outcomeCards = [
+    {
+      stat: "2×",
+      label: "booked jobs",
+      description: "Meta learns which audiences actually schedule — and targets more of them.",
+    },
+    {
+      stat: "−54%",
+      label: "cost per booked job",
+      description: "Real conversion signals replace browser-cookie proxies. Better data, lower CPB.",
+    },
+    {
+      stat: "Every week",
+      label: "it compounds",
+      description: "Each week's job data makes next week's campaigns smarter. The loop never stops.",
+    },
+  ];
+
+  return (
+    <section className="bg-[#0B1628] py-24">
+      <div className="mx-auto max-w-5xl px-6">
+        <div className="mb-14 text-center">
+          <p className="mb-3 text-sm font-semibold uppercase tracking-widest" style={{ color: "#1D9E75" }}>
+            CAPI Revenue Loop
+          </p>
+          <h2 className="text-3xl font-bold tracking-tight text-white sm:text-4xl">
+            Your campaigns get smarter every week.
+          </h2>
+          <p className="mx-auto mt-4 max-w-2xl text-gray-400">
+            Formly sends real booking and revenue events back to Meta — so the algorithm learns
+            from actual jobs booked, not just form fills.
+          </p>
+        </div>
+
+        <div className="mb-14 grid grid-cols-1 gap-6 sm:grid-cols-3">
+          {outcomeCards.map((card) => (
+            <div key={card.label} className="rounded-xl border border-white/10 bg-white/5 p-6 text-center">
+              <p className="text-4xl font-bold text-white">{card.stat}</p>
+              <p className="mt-1 text-sm font-semibold" style={{ color: "#1D9E75" }}>{card.label}</p>
+              <p className="mt-3 text-sm leading-relaxed text-gray-400">{card.description}</p>
+            </div>
+          ))}
+        </div>
+
+        {/* Before / After stat comparison */}
+        <div className="rounded-2xl border border-white/10 bg-white/5 p-8">
+          <p className="mb-8 text-center text-xs font-semibold uppercase tracking-widest text-gray-500">
+            Typical results after 60 days
+          </p>
+          <div className="grid grid-cols-2 gap-8">
+            <div>
+              <p className="mb-4 text-xs font-semibold uppercase tracking-widest text-gray-500">Before Formly</p>
+              <div className="space-y-4">
+                {[
+                  { label: "Leads per month", value: "100" },
+                  { label: "Booked jobs", value: "8" },
+                  { label: "Cost per booked job", value: "$125", red: true },
+                ].map(({ label, value, red }) => (
+                  <div key={label} className="flex items-center justify-between border-b border-white/5 pb-3">
+                    <span className="text-sm text-gray-500">{label}</span>
+                    <span className={`text-lg font-bold ${red ? "text-red-400" : "text-gray-300"}`}>{value}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div>
+              <p className="mb-4 text-xs font-semibold uppercase tracking-widest" style={{ color: "#1D9E75" }}>After Formly</p>
+              <div className="space-y-4">
+                {[
+                  { label: "Leads per month", value: "70", note: "more qualified" },
+                  { label: "Booked jobs", value: "14", note: "+75%" },
+                  { label: "Cost per booked job", value: "$57", note: "−54%" },
+                ].map(({ label, value, note }) => (
+                  <div key={label} className="flex items-center justify-between border-b border-white/5 pb-3">
+                    <span className="text-sm text-gray-400">{label}</span>
+                    <div className="text-right">
+                      <span className="text-lg font-bold text-white">{value}</span>
+                      <span className="ml-2 text-xs font-semibold" style={{ color: "#1D9E75" }}>{note}</span>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
           </div>
@@ -483,6 +612,7 @@ export default function LandingPage() {
     <div className="min-h-screen">
       <Nav />
       <Hero />
+      <CAPIPerformance />
       <ProofStrip />
       <HowItWorks />
       <Features />

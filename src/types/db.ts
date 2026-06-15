@@ -1,6 +1,6 @@
 /** Mirrors Prisma enums — avoids needing generated client for type imports */
 export type ConnectionStatus = "ACTIVE" | "EXPIRED" | "ERROR" | "DISCONNECTED";
-export type DestinationType = "BOOKING" | "LEAD" | "FOLLOWUP";
+export type DestinationType = "BOOKING" | "LEAD" | "FOLLOWUP" | "ESTIMATE";
 export type CampaignStatus = "ACTIVE" | "PAUSED" | "ARCHIVED";
 export type RoutingStatus = "PENDING" | "PROCESSING" | "SUCCESS" | "FAILED" | "RETRY";
 

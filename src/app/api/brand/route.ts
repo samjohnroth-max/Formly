@@ -10,6 +10,7 @@ const DEFAULTS = {
   fontFamily: "Inter",
   buttonStyle: "rounded",
   footerText: "",
+  replyToEmail: null as string | null,
 };
 
 async function getAccountId() {
@@ -21,29 +22,55 @@ async function getAccountId() {
   return user?.accountId ?? null;
 }
 
-export async function GET() {
+// GET /api/brand?clientId=<id>   — returns brand settings for the given client (or account default if no clientId)
+export async function GET(req: Request) {
   const accountId = await getAccountId();
   if (!accountId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const brand = await db.brandSettings.findUnique({ where: { accountId } });
-  return NextResponse.json(brand ?? { ...DEFAULTS, id: null, accountId });
+  const { searchParams } = new URL(req.url);
+  const rawClientId = searchParams.get("clientId");
+  const clientId = rawClientId === "default" || !rawClientId ? null : rawClientId;
+
+  let brand = await db.brandSettings.findFirst({ where: { accountId, clientId } });
+
+  // Fall back to account default if client-specific record doesn't exist
+  if (!brand && clientId !== null) {
+    brand = await db.brandSettings.findFirst({ where: { accountId, clientId: null } });
+  }
+
+  return NextResponse.json(brand ?? { ...DEFAULTS, id: null, accountId, clientId });
 }
 
+// PATCH /api/brand   — upserts brand settings for the given accountId + clientId
 export async function PATCH(req: Request) {
   const accountId = await getAccountId();
   if (!accountId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const body = await req.json();
-  const allowed = ["companyName", "primaryColor", "secondaryColor", "logoUrl", "fontFamily", "buttonStyle", "footerText"];
+  const allowed = [
+    "companyName", "primaryColor", "secondaryColor", "logoUrl",
+    "fontFamily", "buttonStyle", "footerText", "replyToEmail",
+  ];
   const data = Object.fromEntries(
     Object.entries(body).filter(([k]) => allowed.includes(k))
   ) as Record<string, string>;
 
-  const brand = await db.brandSettings.upsert({
-    where: { accountId },
-    update: { ...data, updatedAt: new Date() },
-    create: { accountId, ...DEFAULTS, ...data },
-  });
+  const rawClientId = body.clientId;
+  const clientId = rawClientId === "default" || !rawClientId ? null : (rawClientId as string);
+
+  const existing = await db.brandSettings.findFirst({ where: { accountId, clientId } });
+
+  let brand;
+  if (existing) {
+    brand = await db.brandSettings.update({
+      where: { id: existing.id },
+      data: { ...data, updatedAt: new Date() },
+    });
+  } else {
+    brand = await db.brandSettings.create({
+      data: { accountId, clientId, ...DEFAULTS, ...data },
+    });
+  }
 
   return NextResponse.json(brand);
 }

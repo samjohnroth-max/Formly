@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { Save, RefreshCw } from "lucide-react";
+import { Save, RefreshCw, Copy } from "lucide-react";
 import type { BrandSettings } from "@/components/templates/renderEmail";
 
 const FONTS = ["Inter", "Roboto", "Open Sans", "Lato", "Poppins", "Georgia", "Merriweather"];
@@ -11,7 +11,9 @@ const BUTTON_STYLES = [
   { value: "pill", label: "Pill" },
 ];
 
-function brandPreviewHtml(brand: BrandSettings): string {
+type FormBrand = BrandSettings & { replyToEmail?: string };
+
+function brandPreviewHtml(brand: FormBrand): string {
   const font = brand.fontFamily ?? "Inter";
   const stack = `'${font}',system-ui,sans-serif`;
   const primary = brand.primaryColor ?? "#2563eb";
@@ -40,12 +42,20 @@ ${footer}
 </body></html>`;
 }
 
-interface Props {
-  initial: BrandSettings & { id?: string | null };
+interface ClientOption {
+  id: string;
+  name: string;
 }
 
-export function BrandSettingsForm({ initial }: Props) {
-  const [brand, setBrand] = useState<BrandSettings>({
+interface Props {
+  initial: FormBrand & { id?: string | null; clientId?: string | null };
+  clients?: ClientOption[];
+  activeClientId?: string | null;
+}
+
+export function BrandSettingsForm({ initial, clients = [], activeClientId = null }: Props) {
+  const [selectedClientId, setSelectedClientId] = useState<string | null>(activeClientId);
+  const [brand, setBrand] = useState<FormBrand>({
     companyName: initial.companyName ?? "",
     primaryColor: initial.primaryColor ?? "#2563eb",
     secondaryColor: initial.secondaryColor ?? "#f3f4f6",
@@ -53,15 +63,55 @@ export function BrandSettingsForm({ initial }: Props) {
     fontFamily: initial.fontFamily ?? "Inter",
     buttonStyle: initial.buttonStyle ?? "rounded",
     footerText: initial.footerText ?? "",
+    replyToEmail: initial.replyToEmail ?? "",
   });
+  const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const set = useCallback((key: keyof BrandSettings, value: string) => {
+  const set = useCallback((key: keyof FormBrand, value: string) => {
     setBrand((b) => ({ ...b, [key]: value }));
     setSaved(false);
   }, []);
+
+  async function switchClient(clientId: string | null) {
+    setSelectedClientId(clientId);
+    setLoading(true);
+    setSaved(false);
+    const url = clientId ? `/api/brand?clientId=${clientId}` : "/api/brand?clientId=default";
+    const res = await fetch(url);
+    const data = await res.json();
+    setBrand({
+      companyName: data.companyName ?? "",
+      primaryColor: data.primaryColor ?? "#2563eb",
+      secondaryColor: data.secondaryColor ?? "#f3f4f6",
+      logoUrl: data.logoUrl ?? "",
+      fontFamily: data.fontFamily ?? "Inter",
+      buttonStyle: data.buttonStyle ?? "rounded",
+      footerText: data.footerText ?? "",
+      replyToEmail: data.replyToEmail ?? "",
+    });
+    setLoading(false);
+  }
+
+  async function copyFromDefault() {
+    setLoading(true);
+    const res = await fetch("/api/brand?clientId=default");
+    const data = await res.json();
+    setBrand((b) => ({
+      ...b,
+      companyName: data.companyName ?? b.companyName,
+      primaryColor: data.primaryColor ?? b.primaryColor,
+      secondaryColor: data.secondaryColor ?? b.secondaryColor,
+      logoUrl: data.logoUrl ?? b.logoUrl,
+      fontFamily: data.fontFamily ?? b.fontFamily,
+      buttonStyle: data.buttonStyle ?? b.buttonStyle,
+      footerText: data.footerText ?? b.footerText,
+    }));
+    setSaved(false);
+    setLoading(false);
+  }
 
   async function handleSave() {
     setSaving(true);
@@ -70,7 +120,7 @@ export function BrandSettingsForm({ initial }: Props) {
       const res = await fetch("/api/brand", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(brand),
+        body: JSON.stringify({ ...brand, clientId: selectedClientId }),
       });
       if (!res.ok) throw new Error("Failed to save");
       setSaved(true);
@@ -83,12 +133,43 @@ export function BrandSettingsForm({ initial }: Props) {
 
   const inputCls = "w-full rounded-md border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500";
   const labelCls = "block text-xs font-medium text-gray-500 mb-1";
+  const hasClients = clients.length > 0;
+  const isClientProfile = selectedClientId !== null;
 
   return (
     <div className="flex gap-6 min-h-0">
       {/* Left: form */}
       <div className="w-80 shrink-0 space-y-4">
-        <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm space-y-4">
+
+        {/* Client selector */}
+        {hasClients && (
+          <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+            <label className={labelCls}>Profile</label>
+            <select
+              className={inputCls}
+              value={selectedClientId ?? "default"}
+              onChange={(e) => switchClient(e.target.value === "default" ? null : e.target.value)}
+              disabled={loading}
+            >
+              <option value="default">Default (all clients)</option>
+              {clients.map((c) => (
+                <option key={c.id} value={c.id}>{c.name}</option>
+              ))}
+            </select>
+            {isClientProfile && (
+              <button
+                onClick={copyFromDefault}
+                disabled={loading}
+                className="mt-2 inline-flex items-center gap-1.5 text-xs text-blue-600 hover:text-blue-700 disabled:opacity-50"
+              >
+                <Copy className="size-3" />
+                Copy from default
+              </button>
+            )}
+          </div>
+        )}
+
+        <div className={`rounded-xl border border-gray-200 bg-white p-5 shadow-sm space-y-4 ${loading ? "opacity-50 pointer-events-none" : ""}`}>
           <h2 className="text-sm font-semibold text-gray-900">Brand identity</h2>
 
           <div>
@@ -152,23 +233,39 @@ export function BrandSettingsForm({ initial }: Props) {
           </div>
         </div>
 
-        <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm space-y-3">
-          <h2 className="text-sm font-semibold text-gray-900">Email footer <span className="text-xs font-normal text-gray-400">(CAN-SPAM)</span></h2>
-          <textarea
-            className={`${inputCls} resize-none`}
-            rows={3}
-            value={brand.footerText}
-            onChange={(e) => set("footerText", e.target.value)}
-            placeholder="123 Main St, Springfield, IL 62701 | (555) 555-5555 | yoursite.com"
-          />
-          <p className="text-[10px] text-gray-400">Required by CAN-SPAM. Include your physical address and opt-out info.</p>
+        <div className={`rounded-xl border border-gray-200 bg-white p-5 shadow-sm space-y-3 ${loading ? "opacity-50 pointer-events-none" : ""}`}>
+          <h2 className="text-sm font-semibold text-gray-900">Email settings</h2>
+
+          <div>
+            <label className={labelCls}>Reply-to email</label>
+            <input
+              className={inputCls}
+              type="email"
+              value={brand.replyToEmail ?? ""}
+              onChange={(e) => set("replyToEmail", e.target.value)}
+              placeholder="support@yourcompany.com"
+            />
+            <p className="mt-1 text-[10px] text-gray-400">When leads reply to confirmation emails, replies go here. Defaults to your account email.</p>
+          </div>
+
+          <div>
+            <label className={labelCls}>Email footer <span className="text-gray-400 font-normal">(CAN-SPAM)</span></label>
+            <textarea
+              className={`${inputCls} resize-none`}
+              rows={3}
+              value={brand.footerText}
+              onChange={(e) => set("footerText", e.target.value)}
+              placeholder="123 Main St, Springfield, IL 62701 | (555) 555-5555 | yoursite.com"
+            />
+            <p className="mt-1 text-[10px] text-gray-400">Required by CAN-SPAM. Include your physical address and opt-out info.</p>
+          </div>
         </div>
 
         {error && <p className="text-sm text-red-600">{error}</p>}
 
         <button
           onClick={handleSave}
-          disabled={saving}
+          disabled={saving || loading}
           className="flex w-full items-center justify-center gap-2 rounded-md bg-gray-900 px-4 py-2.5 text-sm font-medium text-white hover:bg-gray-700 disabled:opacity-50"
         >
           {saving ? <RefreshCw className="size-4 animate-spin" /> : <Save className="size-4" />}

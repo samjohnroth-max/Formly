@@ -19,7 +19,7 @@ export async function POST(req: Request) {
   };
 
   const brand = user.accountId
-    ? await db.brandSettings.findUnique({ where: { accountId: user.accountId } })
+    ? await db.brandSettings.findFirst({ where: { accountId: user.accountId, clientId: null } })
     : null;
 
   const html = renderBlocksToHtml(blocks, config, brand ?? undefined);

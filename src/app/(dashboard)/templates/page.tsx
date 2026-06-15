@@ -24,7 +24,7 @@ export default async function TemplatesPage() {
         })
       : Promise.resolve([]),
     user?.accountId
-      ? db.brandSettings.findUnique({ where: { accountId: user.accountId } })
+      ? db.brandSettings.findFirst({ where: { accountId: user.accountId, clientId: null } })
       : Promise.resolve(null),
   ]);
 

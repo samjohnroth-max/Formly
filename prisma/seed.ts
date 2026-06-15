@@ -7,8 +7,6 @@ const db = new PrismaClient();
 const DEMO_EMAIL = "demo@formly.io";
 const DEMO_PASSWORD = "FormlyDemo2026";
 
-// ── Default dev templates (existing behaviour) ──────────────────────────────────
-
 const DEFAULT_TEMPLATES = [
   {
     name: "Lead Confirmation",
@@ -45,7 +43,7 @@ async function seedDevAccount() {
 }
 
 async function seedDemoAccount() {
-  console.log("\nSeeding demo account (Apex Home Services)…");
+  console.log("\nSeeding demo account…");
 
   const passwordHash = await hash(DEMO_PASSWORD, 12);
 
@@ -61,19 +59,21 @@ async function seedDemoAccount() {
     update: { accountId: account.id },
   });
 
-  await db.brandSettings.upsert({
-    where: { accountId: account.id },
-    create: {
-      accountId: account.id,
-      companyName: "Apex Home Services",
-      primaryColor: "#0F4C8F",
-      secondaryColor: "#EEF4FF",
-      logoUrl: "",
-      fontFamily: "Inter",
-      footerText: "Apex Home Services · Dallas, TX · (214) 555-0100",
-    },
-    update: {},
-  });
+  const existingBrand = await db.brandSettings.findFirst({ where: { accountId: account.id, clientId: null } });
+  if (!existingBrand) {
+    await db.brandSettings.create({
+      data: {
+        accountId: account.id,
+        clientId: null,
+        companyName: "Apex Home Services",
+        primaryColor: "#0F4C8F",
+        secondaryColor: "#EEF4FF",
+        logoUrl: "",
+        fontFamily: "Inter",
+        footerText: "Apex Home Services · Dallas, TX · (214) 555-0100",
+      },
+    });
+  }
 
   await db.serviceArea.upsert({
     where: { accountId: account.id },
@@ -81,40 +81,7 @@ async function seedDemoAccount() {
     update: {},
   });
 
-  let metaConn = await db.metaConnection.findFirst({ where: { accountId: account.id } });
-  if (!metaConn) {
-    metaConn = await db.metaConnection.create({
-      data: {
-        accountId: account.id,
-        metaAccountId: "act_apex872345",
-        metaAccountName: "Apex Home Services",
-        accessToken: "demo_access_token_not_real",
-        pixelId: "987654321012345",
-        datasetId: "demo_dataset_id",
-        status: "ACTIVE",
-      },
-    });
-  }
-
-  let client = await db.client.findFirst({ where: { accountId: account.id } });
-  if (!client) {
-    client = await db.client.create({ data: { accountId: account.id, name: "Apex Home Services" } });
-  }
-
-  let stConn = await db.sTConnection.findFirst({ where: { accountId: account.id } });
-  if (!stConn) {
-    stConn = await db.sTConnection.create({
-      data: {
-        accountId: account.id,
-        tenantId: "demo_tenant_872345",
-        tenantName: "Apex Home Services",
-        clientId: "demo_client_id",
-        clientSecret: "demo_client_secret",
-        appKey: "demo_app_key",
-        status: "ACTIVE",
-      },
-    });
-  }
+  // ── Email templates (stable) ──────────────────────────────────────────────
 
   const tpl1 = await db.emailTemplate.upsert({
     where: { accountId_name: { accountId: account.id, name: "Booking Confirmation" } },
@@ -164,26 +131,131 @@ async function seedDemoAccount() {
     update: {},
   });
 
-  let hvac = await db.campaign.findFirst({ where: { accountId: account.id, name: "HVAC Summer Deals" } });
-  if (!hvac) {
-    hvac = await db.campaign.create({
-      data: {
-        accountId: account.id,
-        metaConnectionId: metaConn.id,
-        stConnectionId: stConn.id,
-        name: "HVAC Summer Deals",
-        metaFormId: "demo_form_hvac_2026",
-        metaFormName: "HVAC Summer Deals 2026",
-        metaAdAccountId: metaConn.metaAccountId,
-        destinationType: "BOOKING",
-        jobType: "HVAC Maintenance",
-        businessUnit: "Residential HVAC",
-        priority: "Normal",
-        campaignTag: "meta-hvac-summer-2026",
-        capiEnabled: true,
-        emailTemplateId: tpl1.id,
-        status: "ACTIVE",
-        fieldMappings: { create: [
+  // ── Wipe existing demo-specific data for a clean reset ────────────────────
+  console.log("Wiping existing demo data…");
+
+  const existingLeads = await db.lead.findMany({ where: { accountId: account.id }, select: { id: true } });
+  if (existingLeads.length > 0) {
+    const leadIds = existingLeads.map((l) => l.id);
+    await db.cAPIEvent.deleteMany({ where: { leadId: { in: leadIds } } });
+    await db.lead.deleteMany({ where: { accountId: account.id } });
+  }
+  await db.monthlyAdSpend.deleteMany({ where: { campaign: { accountId: account.id } } });
+  await db.fieldMapping.deleteMany({ where: { campaign: { accountId: account.id } } });
+  await db.campaign.deleteMany({ where: { accountId: account.id } });
+  await db.sTConnection.deleteMany({ where: { accountId: account.id } });
+  await db.metaConnection.deleteMany({ where: { accountId: account.id } });
+  await db.client.deleteMany({ where: { accountId: account.id } });
+
+  // ── Create 3 clients ──────────────────────────────────────────────────────
+  console.log("Creating clients and connections…");
+
+  const hvacClient = await db.client.create({ data: { accountId: account.id, name: "Apex HVAC" } });
+  const plumbingClient = await db.client.create({ data: { accountId: account.id, name: "Summit Plumbing" } });
+  const roofingClient = await db.client.create({ data: { accountId: account.id, name: "Ridgeline Roofing" } });
+
+  // ── Create 3 Meta connections (one per client) ────────────────────────────
+  const hvacMeta = await db.metaConnection.create({
+    data: {
+      accountId: account.id,
+      groupId: hvacClient.id,
+      metaAccountId: "act_apex_hvac_2026",
+      metaAccountName: "Apex HVAC",
+      accessToken: "demo_access_token_not_real",
+      pixelId: "987654321012345",
+      datasetId: "demo_dataset_hvac",
+      status: "ACTIVE",
+    },
+  });
+
+  const plumbingMeta = await db.metaConnection.create({
+    data: {
+      accountId: account.id,
+      groupId: plumbingClient.id,
+      metaAccountId: "act_summit_plumbing_2026",
+      metaAccountName: "Summit Plumbing",
+      accessToken: "demo_access_token_not_real",
+      pixelId: "987654321012346",
+      datasetId: "demo_dataset_plumbing",
+      status: "ACTIVE",
+    },
+  });
+
+  const roofingMeta = await db.metaConnection.create({
+    data: {
+      accountId: account.id,
+      groupId: roofingClient.id,
+      metaAccountId: "act_ridgeline_roofing_2026",
+      metaAccountName: "Ridgeline Roofing",
+      accessToken: "demo_access_token_not_real",
+      pixelId: "987654321012347",
+      datasetId: "demo_dataset_roofing",
+      status: "ACTIVE",
+    },
+  });
+
+  // ── Create 3 ST connections (one per client) ──────────────────────────────
+  const hvacST = await db.sTConnection.create({
+    data: {
+      accountId: account.id,
+      groupId: hvacClient.id,
+      tenantId: "demo_tenant_hvac",
+      tenantName: "Apex HVAC",
+      clientId: "demo_client_id_hvac",
+      clientSecret: "demo_client_secret",
+      appKey: "demo_app_key",
+      status: "ACTIVE",
+    },
+  });
+
+  const plumbingST = await db.sTConnection.create({
+    data: {
+      accountId: account.id,
+      groupId: plumbingClient.id,
+      tenantId: "demo_tenant_plumbing",
+      tenantName: "Summit Plumbing",
+      clientId: "demo_client_id_plumbing",
+      clientSecret: "demo_client_secret",
+      appKey: "demo_app_key",
+      status: "ACTIVE",
+    },
+  });
+
+  const roofingST = await db.sTConnection.create({
+    data: {
+      accountId: account.id,
+      groupId: roofingClient.id,
+      tenantId: "demo_tenant_roofing",
+      tenantName: "Ridgeline Roofing",
+      clientId: "demo_client_id_roofing",
+      clientSecret: "demo_client_secret",
+      appKey: "demo_app_key",
+      status: "ACTIVE",
+    },
+  });
+
+  // ── Create 3 campaigns ────────────────────────────────────────────────────
+  console.log("Creating campaigns…");
+
+  const hvac = await db.campaign.create({
+    data: {
+      accountId: account.id,
+      metaConnectionId: hvacMeta.id,
+      stConnectionId: hvacST.id,
+      name: "Apex HVAC",
+      metaFormId: "demo_form_hvac_2026",
+      metaFormName: "Apex HVAC — Summer Deals 2026",
+      metaAdAccountId: hvacMeta.metaAccountId,
+      destinationType: "BOOKING",
+      jobType: "HVAC Maintenance",
+      businessUnit: "Residential HVAC",
+      priority: "Normal",
+      campaignTag: "meta-hvac-summer-2026",
+      capiEnabled: true,
+      emailTemplateId: tpl1.id,
+      status: "ACTIVE",
+      fieldMappings: {
+        create: [
           { metaField: "full_name",       stField: "customer.name" },
           { metaField: "phone_number",    stField: "customer.phone" },
           { metaField: "email",           stField: "customer.email" },
@@ -191,79 +263,79 @@ async function seedDemoAccount() {
           { metaField: "zip_code",        stField: "location.zip" },
           { metaField: "city",            stField: "location.city" },
           { metaField: "state",           stField: "location.state" },
-          { metaField: "service_interest",stField: "job.notes" },
-        ]},
+          { metaField: "service_interest", stField: "job.notes" },
+        ],
       },
-    });
-  }
+    },
+  });
 
-  let plumbing = await db.campaign.findFirst({ where: { accountId: account.id, name: "Plumbing Emergency" } });
-  if (!plumbing) {
-    plumbing = await db.campaign.create({
-      data: {
-        accountId: account.id,
-        metaConnectionId: metaConn.id,
-        stConnectionId: stConn.id,
-        name: "Plumbing Emergency",
-        metaFormId: "demo_form_plumbing_2026",
-        metaFormName: "Plumbing Emergency Response Form",
-        metaAdAccountId: metaConn.metaAccountId,
-        destinationType: "LEAD",
-        campaignTag: "meta-plumbing-emergency-2026",
-        capiEnabled: true,
-        emailTemplateId: tpl2.id,
-        status: "ACTIVE",
-        fieldMappings: { create: [
+  const plumbing = await db.campaign.create({
+    data: {
+      accountId: account.id,
+      metaConnectionId: plumbingMeta.id,
+      stConnectionId: plumbingST.id,
+      name: "Summit Plumbing",
+      metaFormId: "demo_form_plumbing_2026",
+      metaFormName: "Summit Plumbing — Emergency Response Form",
+      metaAdAccountId: plumbingMeta.metaAccountId,
+      destinationType: "LEAD",
+      campaignTag: "meta-plumbing-emergency-2026",
+      capiEnabled: true,
+      emailTemplateId: tpl2.id,
+      status: "ACTIVE",
+      fieldMappings: {
+        create: [
           { metaField: "full_name",       stField: "customer.name" },
           { metaField: "phone_number",    stField: "customer.phone" },
           { metaField: "email",           stField: "customer.email" },
           { metaField: "zip_code",        stField: "location.zip" },
-          { metaField: "service_interest",stField: "job.notes" },
-        ]},
+          { metaField: "service_interest", stField: "job.notes" },
+        ],
       },
-    });
-  }
+    },
+  });
 
-  let roofing = await db.campaign.findFirst({ where: { accountId: account.id, name: "Roofing Estimate" } });
-  if (!roofing) {
-    roofing = await db.campaign.create({
-      data: {
-        accountId: account.id,
-        metaConnectionId: metaConn.id,
-        stConnectionId: stConn.id,
-        name: "Roofing Estimate",
-        metaFormId: "demo_form_roofing_2026",
-        metaFormName: "Free Roofing Estimate Form",
-        metaAdAccountId: metaConn.metaAccountId,
-        destinationType: "FOLLOWUP",
-        followupDays: 3,
-        campaignTag: "meta-roofing-estimate-2026",
-        capiEnabled: true,
-        emailTemplateId: tpl3.id,
-        status: "ACTIVE",
-        fieldMappings: { create: [
+  const roofing = await db.campaign.create({
+    data: {
+      accountId: account.id,
+      metaConnectionId: roofingMeta.id,
+      stConnectionId: roofingST.id,
+      name: "Ridgeline Roofing",
+      metaFormId: "demo_form_roofing_2026",
+      metaFormName: "Ridgeline Roofing — Free Estimate Form",
+      metaAdAccountId: roofingMeta.metaAccountId,
+      destinationType: "FOLLOWUP",
+      followupDays: 3,
+      campaignTag: "meta-roofing-estimate-2026",
+      capiEnabled: true,
+      emailTemplateId: tpl3.id,
+      status: "ACTIVE",
+      fieldMappings: {
+        create: [
           { metaField: "full_name",      stField: "customer.name" },
           { metaField: "phone_number",   stField: "customer.phone" },
           { metaField: "email",          stField: "customer.email" },
           { metaField: "street_address", stField: "location.street" },
           { metaField: "zip_code",       stField: "location.zip" },
-        ]},
+        ],
       },
-    });
-  }
+    },
+  });
 
+  // ── Ad spend ──────────────────────────────────────────────────────────────
   const currentMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
-  await db.monthlyAdSpend.upsert({ where: { campaignId_month: { campaignId: hvac.id,     month: currentMonth } }, create: { campaignId: hvac.id,     month: currentMonth, spend: 2400 }, update: {} });
-  await db.monthlyAdSpend.upsert({ where: { campaignId_month: { campaignId: plumbing.id, month: currentMonth } }, create: { campaignId: plumbing.id, month: currentMonth, spend: 800  }, update: {} });
-  await db.monthlyAdSpend.upsert({ where: { campaignId_month: { campaignId: roofing.id,  month: currentMonth } }, create: { campaignId: roofing.id,  month: currentMonth, spend: 1200 }, update: {} });
+  await db.monthlyAdSpend.create({ data: { campaignId: hvac.id,     month: currentMonth, spend: 2400 } });
+  await db.monthlyAdSpend.create({ data: { campaignId: plumbing.id, month: currentMonth, spend: 800  } });
+  await db.monthlyAdSpend.create({ data: { campaignId: roofing.id,  month: currentMonth, spend: 1200 } });
 
+  // ── Generate leads ────────────────────────────────────────────────────────
   console.log("Generating 47 demo leads…");
   await generateDemoLeads(db, account.id, hvac.id, plumbing.id, roofing.id);
 
   console.log("\n✓ Demo account seeded:");
   console.log(`  Email:    ${DEMO_EMAIL}`);
   console.log(`  Password: ${DEMO_PASSWORD}`);
-  console.log(`  URL:      https://yourapp.com/demo`);
+  console.log(`  Clients:  Apex HVAC · Summit Plumbing · Ridgeline Roofing`);
 }
 
 async function main() {

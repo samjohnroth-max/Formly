@@ -104,9 +104,10 @@ interface Props {
   rows: CampaignPerfRow[];
   periodKey: string;
   rangeLabel: string;
+  isDemo?: boolean;
 }
 
-export function CampaignPerformanceTable({ rows, periodKey, rangeLabel }: Props) {
+export function CampaignPerformanceTable({ rows, periodKey, rangeLabel, isDemo }: Props) {
   const [sortKey, setSortKey] = useState<SortKey>("totalRevenue");
   const [dir, setDir] = useState<"asc" | "desc">("desc");
   const [editing, setEditing] = useState<{ campaignId: string; value: string } | null>(null);
@@ -365,9 +366,14 @@ export function CampaignPerformanceTable({ rows, periodKey, rangeLabel }: Props)
                     <td className="px-3 py-3 text-right tabular-nums text-gray-700 dark:text-[#F0F4FF]">
                       {fmtCurrency(r.totalRevenue)}
                     </td>
-                    {/* Ad spend — inline editable */}
+                    {/* Ad spend — demo mode shows hardcoded value with label; live mode is editable */}
                     <td className="px-3 py-3 text-right">
-                      {isEditing ? (
+                      {isDemo ? (
+                        <div className="inline-flex flex-col items-end gap-0.5">
+                          <span className="tabular-nums text-gray-700 dark:text-[#F0F4FF]">{fmtCurrency(r.adSpend)}</span>
+                          <span className="text-[9px] font-medium uppercase tracking-wide text-gray-400 dark:text-[#8B90A0]">Demo data</span>
+                        </div>
+                      ) : isEditing ? (
                         <div className="inline-flex items-center gap-1 justify-end">
                           <span className="text-gray-400 text-xs">$</span>
                           <input

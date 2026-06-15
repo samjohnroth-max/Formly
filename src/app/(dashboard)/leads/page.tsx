@@ -15,6 +15,7 @@ const DEST_BADGE: Record<DestinationType, { label: string; className: string }> 
   BOOKING:  { label: "Booking",   className: "bg-blue-50 text-blue-700 dark:bg-blue-500/10 dark:text-blue-400" },
   LEAD:     { label: "Lead",      className: "bg-purple-50 text-purple-700 dark:bg-purple-500/10 dark:text-purple-400" },
   FOLLOWUP: { label: "Follow-up", className: "bg-orange-50 text-orange-700 dark:bg-orange-500/10 dark:text-orange-400" },
+  ESTIMATE: { label: "Estimate",  className: "bg-teal-50 text-teal-700 dark:bg-teal-500/10 dark:text-teal-400" },
 };
 
 interface LeadRow {

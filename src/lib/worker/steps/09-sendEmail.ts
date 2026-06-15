@@ -35,11 +35,33 @@ export async function sendEmail(ctx: ProcessingContext): Promise<void> {
     campaignName: "Formly",
   };
 
+  // Resolve Reply-To: client brand settings → account owner email
+  let replyTo: string | undefined;
+  const metaConn = await db.metaConnection.findUnique({
+    where: { id: campaign.metaConnectionId },
+    select: { groupId: true },
+  });
+  if (metaConn?.groupId) {
+    const clientBrand = await db.brandSettings.findFirst({
+      where: { accountId: campaign.accountId, clientId: metaConn.groupId },
+      select: { replyToEmail: true },
+    });
+    replyTo = clientBrand?.replyToEmail ?? undefined;
+  }
+  if (!replyTo) {
+    const owner = await db.user.findFirst({
+      where: { accountId: campaign.accountId, role: "OWNER" },
+      select: { email: true },
+    });
+    replyTo = owner?.email ?? undefined;
+  }
+
   try {
     const resend = new Resend(process.env.AUTH_RESEND_KEY);
     const { error } = await resend.emails.send({
       from: process.env.EMAIL_FROM ?? "Formly <noreply@formly.app>",
       to: ctx.email,
+      replyTo,
       subject: renderTemplate(campaign.emailTemplate.subject, vars),
       html: renderTemplate(campaign.emailTemplate.body, vars),
     });

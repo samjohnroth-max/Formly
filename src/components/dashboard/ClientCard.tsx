@@ -4,7 +4,7 @@ import { useState, useTransition } from "react";
 import { formatDistanceToNow } from "date-fns";
 import {
   CheckCircle, Clock, AlertCircle, XCircle,
-  Zap, Unlink, RefreshCw, Loader2, Pencil, Check, X, Trash2, ExternalLink, Plus,
+  Zap, Unlink, RefreshCw, Loader2, Pencil, Check, X, Trash2, ExternalLink, Plus, Palette,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { AddSTModal } from "./AddSTModal";
@@ -380,13 +380,23 @@ export function ClientCard({ client, onRefresh, isNew = false }: ClientCardProps
           )}
 
           {!confirmDelete ? (
-            <button
-              onClick={() => setConfirmDelete(true)}
-              className="rounded-md p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-500"
-              title="Remove client"
-            >
-              <Trash2 className="size-4" />
-            </button>
+            <div className="flex items-center gap-1.5">
+              <a
+                href={`/settings/brand?client=${client.id}`}
+                className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs text-gray-500 hover:bg-gray-100 hover:text-gray-700"
+                title="Brand settings"
+              >
+                <Palette className="size-3.5" />
+                Brand
+              </a>
+              <button
+                onClick={() => setConfirmDelete(true)}
+                className="rounded-md p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-500"
+                title="Remove client"
+              >
+                <Trash2 className="size-4" />
+              </button>
+            </div>
           ) : (
             <div className="flex items-center gap-2 text-sm">
               <span className="text-gray-600">Remove client?</span>

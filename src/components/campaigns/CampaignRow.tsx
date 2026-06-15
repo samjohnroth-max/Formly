@@ -21,9 +21,10 @@ interface Props {
 }
 
 const DESTINATION_BADGE: Record<DestinationType, { label: string; className: string }> = {
-  BOOKING: { label: "Booking", className: "bg-blue-50 text-blue-700 ring-blue-600/20" },
-  LEAD: { label: "Lead", className: "bg-purple-50 text-purple-700 ring-purple-600/20" },
+  BOOKING:  { label: "Booking",   className: "bg-blue-50 text-blue-700 ring-blue-600/20" },
+  LEAD:     { label: "Lead",      className: "bg-purple-50 text-purple-700 ring-purple-600/20" },
   FOLLOWUP: { label: "Follow-up", className: "bg-orange-50 text-orange-700 ring-orange-600/20" },
+  ESTIMATE: { label: "Estimate",  className: "bg-teal-50 text-teal-700 ring-teal-600/20" },
 };
 
 const STATUS_BADGE: Record<CampaignStatus, { label: string; className: string }> = {

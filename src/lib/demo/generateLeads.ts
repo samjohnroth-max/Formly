@@ -78,16 +78,16 @@ const PLUMBING_SOLD_VALUES = [1200, 1100, 1300, 1200, 1200, 1100, 1300];
 const ROOFING_SOLD_VALUES  = [4000, 4200, 4400];
 
 // Deterministic day offsets from now — ensures data appears in all time filter windows:
-// 3 leads today, 5 more in days 1-6, ~9 more in days 7-29, rest in days 30-89
+// 3 today, 8 in 7d, 20 in 30d, 47 total
 const HVAC_DAYS = [
   // today: 2
   0, 0,
   // days 1-6: 3
   1, 3, 5,
-  // days 7-29: 5
-  8, 12, 16, 22, 26,
-  // days 30-89: 18
-  30, 33, 36, 39, 42, 45, 48, 52, 56, 60, 64, 68, 72, 76, 80, 84, 87, 89,
+  // days 7-29: 8
+  8, 12, 16, 19, 22, 24, 26, 28,
+  // days 30-89: 15
+  39, 42, 45, 48, 52, 56, 60, 64, 68, 72, 76, 80, 84, 87, 89,
 ]; // total: 28
 
 const PLUMBING_DAYS = [

@@ -32,6 +32,11 @@ export default async function DashboardPage({ searchParams }: PageProps) {
   });
 
   const accountId = user?.accountId ?? "";
+
+  const account = accountId
+    ? await db.account.findUnique({ where: { id: accountId }, select: { email: true } })
+    : null;
+  const isDemo = account?.email === "demo@formly.io";
   const dateRange = parseDateRangeParams(searchParams);
   const periodKey = getPeriodKey(dateRange);
   const rangeLabel = formatRangeLabel(dateRange);
@@ -88,6 +93,7 @@ export default async function DashboardPage({ searchParams }: PageProps) {
         rows={campaignPerf}
         periodKey={periodKey}
         rangeLabel={rangeLabel}
+        isDemo={isDemo}
       />
     </div>
   );

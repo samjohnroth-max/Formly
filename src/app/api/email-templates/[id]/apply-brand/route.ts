@@ -16,7 +16,7 @@ export async function POST(_: Request, { params }: { params: { id: string } }) {
   const template = await db.emailTemplate.findFirst({ where: { id: params.id, accountId } });
   if (!template) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-  const brand = await db.brandSettings.findUnique({ where: { accountId } });
+  const brand = await db.brandSettings.findFirst({ where: { accountId, clientId: null } });
   if (!brand) return NextResponse.json({ error: "No brand settings saved yet" }, { status: 400 });
 
   const blocks = (template.blocks ?? []) as unknown as Block[];

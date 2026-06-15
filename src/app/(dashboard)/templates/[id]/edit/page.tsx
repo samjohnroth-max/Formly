@@ -14,7 +14,7 @@ export default async function EditTemplatePage({ params }: { params: { id: strin
 
   const [template, brand] = await Promise.all([
     db.emailTemplate.findFirst({ where: { id: params.id, accountId: user.accountId } }),
-    db.brandSettings.findUnique({ where: { accountId: user.accountId } }),
+    db.brandSettings.findFirst({ where: { accountId: user.accountId, clientId: null } }),
   ]);
   if (!template) notFound();
 
