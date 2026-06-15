@@ -79,8 +79,8 @@ export function EmailSequence({ campaignId, initialSteps, templates }: Props) {
     <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
       <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4">
         <div>
-          <h2 className="text-sm font-semibold text-gray-900">Email sequence</h2>
-          <p className="mt-0.5 text-xs text-gray-500">Up to 5 automated emails per lead journey. Enable each step and assign a template.</p>
+          <h2 className="text-sm font-semibold text-gray-900">Follow-up sequence</h2>
+          <p className="mt-0.5 text-xs text-gray-500">Up to 5 automated follow-up emails per lead journey. Enable each step and assign a template.</p>
         </div>
         <button
           onClick={handleSave}

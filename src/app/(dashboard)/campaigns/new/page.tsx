@@ -13,7 +13,7 @@ const STEPS = [
   { label: "Meta Form", description: "Choose your ad account and form" },
   { label: "Destination", description: "Configure ServiceTitan routing" },
   { label: "Field Mapping", description: "Map form fields to ST fields" },
-  { label: "Email", description: "Optional confirmation email" },
+  { label: "Follow-up", description: "Optional follow-up email" },
 ];
 
 const INITIAL: WizardState = {

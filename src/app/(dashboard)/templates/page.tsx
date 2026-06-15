@@ -79,8 +79,8 @@ export default async function TemplatesPage() {
     <div className="mx-auto max-w-4xl p-8">
       <div className="mb-6 flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-semibold text-gray-900 dark:text-[#F0F4FF]">Email Templates</h1>
-          <p className="mt-1 text-sm text-gray-500 dark:text-[#8B90A0]">Templates used for lead notifications in campaigns</p>
+          <h1 className="text-xl font-semibold text-gray-900 dark:text-[#F0F4FF]">Follow-ups</h1>
+          <p className="mt-1 text-sm text-gray-500 dark:text-[#8B90A0]">Automated follow-up emails sent to leads from your campaigns</p>
         </div>
         <Link
           href="/templates/new"
@@ -94,7 +94,7 @@ export default async function TemplatesPage() {
       {templates.length === 0 ? (
         <div className="rounded-xl border-2 border-dashed border-gray-200 dark:border-[#2A2D3E] p-12 text-center">
           <FileText className="mx-auto mb-3 size-8 text-gray-300 dark:text-[#2A2D3E]" />
-          <p className="text-sm text-gray-500 dark:text-[#8B90A0]">No templates yet. Create your first one.</p>
+          <p className="text-sm text-gray-500 dark:text-[#8B90A0]">No follow-ups yet. Create your first one.</p>
         </div>
       ) : (
         <div className="space-y-2">
@@ -128,14 +128,24 @@ export default async function TemplatesPage() {
                     <TemplateDeleteButton id={t.id} name={t.name} />
                   </div>
                 </div>
-                {stats.sent > 0 && (
-                  <div className="mt-3 flex items-center gap-4 border-t border-gray-100 dark:border-[#2A2D3E] pt-3">
-                    <StatPill label="Sent" value={stats.sent.toLocaleString()} color="blue" />
-                    <StatPill label="Open rate" value={stats.openRate !== null ? `${stats.openRate}%` : "—"} color={stats.openRate !== null && stats.openRate >= 30 ? "green" : "amber"} />
-                    <StatPill label="Click rate" value={stats.clickRate !== null ? `${stats.clickRate}%` : "—"} color="purple" />
-                    <StatPill label="Booking clicks" value={stats.bookingClickRate !== null ? `${stats.bookingClickRate}%` : "—"} color="green" />
-                  </div>
-                )}
+                <div
+                  className="mt-3 flex items-center gap-4 border-t border-gray-100 dark:border-[#2A2D3E] pt-3"
+                  title={stats.sent === 0 ? "Stats will appear after your first email is sent" : undefined}
+                >
+                  <StatPill label="Sent" value={stats.sent.toLocaleString()} color="blue" />
+                  <StatPill
+                    label="Open rate"
+                    value={stats.openRate !== null ? `${stats.openRate}%` : "—"}
+                    color={stats.openRate !== null && stats.openRate >= 30 ? "green" : "amber"}
+                  />
+                  <StatPill label="Click rate" value={stats.clickRate !== null ? `${stats.clickRate}%` : "—"} color="purple" />
+                  <StatPill label="Booking clicks" value={stats.bookingClickRate !== null ? `${stats.bookingClickRate}%` : "—"} color="green" />
+                  {stats.sent === 0 && (
+                    <span className="ml-auto text-xs text-gray-400 dark:text-[#8B90A0] italic">
+                      Stats appear after first send
+                    </span>
+                  )}
+                </div>
               </div>
             );
           })}

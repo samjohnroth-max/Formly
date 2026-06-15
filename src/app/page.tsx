@@ -114,7 +114,7 @@ function Hero() {
           <div className="grid grid-cols-4 gap-0 divide-x divide-white/5">
             <div className="col-span-1 border-r border-white/5 bg-gray-900 p-4 space-y-1">
               <div className="mb-4 text-sm font-bold text-white">Formly</div>
-              {["Dashboard", "Connections", "Campaigns", "Leads", "Templates", "Settings"].map((item, i) => (
+              {["Dashboard", "Connections", "Campaigns", "Leads", "Follow-ups", "Settings"].map((item, i) => (
                 <div key={item} className={`flex items-center gap-2 rounded-md px-2.5 py-1.5 text-xs ${i === 0 ? "bg-white/10 text-white" : "text-gray-500"}`}>
                   <div className="h-3 w-3 rounded-sm bg-current opacity-50" />
                   {item}

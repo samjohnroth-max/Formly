@@ -27,7 +27,7 @@ export const CATEGORIES: Category[] = [
   { slug: "connecting-accounts", label: "Connecting Accounts",   icon: "Link2" },
   { slug: "campaigns",           label: "Campaigns",             icon: "Megaphone" },
   { slug: "leads-routing",       label: "Leads & Routing",       icon: "Users" },
-  { slug: "email-templates",     label: "Email Templates",       icon: "Mail" },
+  { slug: "email-templates",     label: "Follow-ups",            icon: "Mail" },
   { slug: "servicetitan",        label: "ServiceTitan",          icon: "Briefcase" },
   { slug: "capi-meta",           label: "CAPI & Meta",           icon: "Zap" },
   { slug: "troubleshooting",     label: "Troubleshooting",       icon: "Wrench" },
@@ -69,7 +69,7 @@ export const ARTICLES: Article[] = [
         "Step 1: Pick your Meta ad account and the Instant Form you want to route.",
         "Step 2: Choose a destination type (Booking, Lead, or Follow-up) and select your ST tenant.",
         "Step 3: Map your form fields to ServiceTitan fields (full_name → customer.name, phone_number → customer.phone, etc.).",
-        "Step 4: Optionally attach a confirmation email template.",
+        "Step 4: Optionally attach a follow-up email.",
         "Click Create Campaign. The campaign goes live immediately.",
       ]},
       { type: "h2", text: "Step 5 — Test with a live lead" },
@@ -241,8 +241,8 @@ export const ARTICLES: Article[] = [
       { type: "p", text: "Choose your ServiceTitan tenant and the destination type: Booking, Lead, or Follow-up. For Booking, you'll also select a job type and business unit." },
       { type: "h2", text: "Step 3: Map form fields" },
       { type: "p", text: "Tell Formly which Meta form question maps to which ServiceTitan field. Common mappings: full_name → customer.name, phone_number → customer.phone, street_address → location.street." },
-      { type: "h2", text: "Step 4: Email template (optional)" },
-      { type: "p", text: "Attach an email template if you want to automatically send a confirmation to the lead. This is optional." },
+      { type: "h2", text: "Step 4: Follow-up (optional)" },
+      { type: "p", text: "Attach a follow-up email if you want to automatically send a confirmation to the lead. This is optional." },
       { type: "tip", text: "After creating the campaign, submit a test lead through Meta Ads Manager to confirm routing works before going live with real ad spend." },
     ],
   },
@@ -290,8 +290,8 @@ export const ARTICLES: Article[] = [
   },
   {
     slug: "email-sequences-per-campaign",
-    title: "Setting up email sequences per campaign",
-    description: "How to configure automated email sequences that send after a lead arrives.",
+    title: "Setting up follow-up sequences per campaign",
+    description: "How to configure automated follow-up emails that send after a lead arrives.",
     categorySlug: "campaigns",
     content: [
       { type: "p", text: "Each campaign supports a 5-step email sequence. Steps trigger based on timing or lead status events." },
@@ -306,11 +306,11 @@ export const ARTICLES: Article[] = [
       { type: "h2", text: "Setting up a step" },
       { type: "ol", items: [
         "Go to Campaigns and click the gear icon on any campaign.",
-        "Under Email Sequence, toggle the steps you want to enable.",
-        "Select a template for each enabled step.",
+        "Under Follow-up sequence, toggle the steps you want to enable.",
+        "Select a follow-up for each enabled step.",
         "Click Save sequence.",
       ]},
-      { type: "note", text: "Steps only send if a template is assigned and the toggle is enabled. Steps without a template are silently skipped." },
+      { type: "note", text: "Steps only send if a follow-up is assigned and the toggle is enabled. Steps without a follow-up are silently skipped." },
     ],
   },
 
@@ -455,15 +455,15 @@ export const ARTICLES: Article[] = [
     ],
   },
 
-  // ─── Email Templates ────────────────────────────────────────────
+  // ─── Follow-ups ─────────────────────────────────────────────────
   {
     slug: "build-email-template",
-    title: "Building your first email template",
-    description: "How to use the visual block editor to create professional confirmation emails.",
+    title: "Building your first follow-up email",
+    description: "How to use the visual block editor to create professional follow-up emails.",
     categorySlug: "email-templates",
     content: [
       { type: "ol", items: [
-        "Go to Templates in the sidebar.",
+        "Go to Follow-ups in the sidebar.",
         "Click New template.",
         "Choose a layout (Minimal, Bold, Friendly, Professional, Modern) or start from scratch.",
         "Use the block editor on the left to add and reorder content blocks: headers, text, buttons, images, dividers.",
@@ -485,10 +485,10 @@ export const ARTICLES: Article[] = [
   {
     slug: "brand-settings",
     title: "Setting up your brand settings",
-    description: "How to configure your logo, colors, and fonts so all templates reflect your brand automatically.",
+    description: "How to configure your logo, colors, and fonts so all follow-up emails reflect your brand automatically.",
     categorySlug: "email-templates",
     content: [
-      { type: "p", text: "Brand settings let you define your visual identity once and apply it across all email templates with one click." },
+      { type: "p", text: "Brand settings let you define your visual identity once and apply it across all follow-up emails with one click." },
       { type: "h2", text: "Configuring brand settings" },
       { type: "ol", items: [
         "Go to Settings > Brand settings.",
@@ -498,20 +498,20 @@ export const ARTICLES: Article[] = [
         "Set a footer text (company name, address, unsubscribe info).",
         "Click Save. A live preview updates as you type.",
       ]},
-      { type: "h2", text: "Applying brand to a template" },
-      { type: "p", text: "On the Templates list, click Apply brand next to any template. Formly re-renders the template with your brand colors and font. You can also click Apply brand inside the template editor." },
+      { type: "h2", text: "Applying brand to a follow-up" },
+      { type: "p", text: "On the Follow-ups list, click Apply brand next to any follow-up. Formly re-renders it with your brand colors and font. You can also click Apply brand inside the editor." },
     ],
   },
   {
     slug: "send-test-email",
     title: "How to send a test email",
-    description: "Send a preview of any template to your inbox before using it in a campaign.",
+    description: "Send a preview of any follow-up to your inbox before using it in a campaign.",
     categorySlug: "email-templates",
     content: [
       { type: "ol", items: [
-        "Open any template in the editor (Templates > Edit).",
+        "Open any follow-up in the editor (Follow-ups > Edit).",
         "Click the Send test email button in the top-right of the editor.",
-        "Formly renders the template with placeholder values and sends it to your account email address.",
+        "Formly renders the follow-up with placeholder values and sends it to your account email address.",
         "Check your inbox within 1–2 minutes.",
       ]},
       { type: "note", text: "Test emails are sent from noreply@formly.app. Make sure this domain is not blocked by your email provider." },
@@ -520,7 +520,7 @@ export const ARTICLES: Article[] = [
   {
     slug: "merge-tags",
     title: "Understanding merge tags",
-    description: "How to use {{merge_tags}} to personalize emails with lead data.",
+    description: "How to use {{merge_tags}} to personalize follow-up emails with lead data.",
     categorySlug: "email-templates",
     content: [
       { type: "p", text: "Merge tags are placeholders that Formly replaces with actual lead data when sending an email." },

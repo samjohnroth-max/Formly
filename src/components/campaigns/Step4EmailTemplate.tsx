@@ -31,12 +31,12 @@ export function Step4EmailTemplate({ state, onChange }: Props) {
   return (
     <div className="space-y-4">
       <p className="text-sm text-gray-600">
-        Optionally send a confirmation email to every lead. You can skip this and configure it later.
+        Optionally send a follow-up email to every lead. You can skip this and configure it later.
       </p>
 
       {loading ? (
         <div className="flex items-center gap-2 text-sm text-gray-500">
-          <Loader2 className="size-4 animate-spin" /> Loading templates…
+          <Loader2 className="size-4 animate-spin" /> Loading follow-ups…
         </div>
       ) : (
         <div className="space-y-2">
@@ -51,9 +51,9 @@ export function Step4EmailTemplate({ state, onChange }: Props) {
 
           {templates.length === 0 ? (
             <div className="rounded-lg border border-dashed border-gray-300 p-4 text-center">
-              <p className="text-sm text-gray-500">No email templates yet.</p>
+              <p className="text-sm text-gray-500">No follow-ups yet.</p>
               <a href="/templates/new" className="mt-1 block text-sm text-blue-600 hover:underline">
-                Create one →
+                Create a follow-up →
               </a>
             </div>
           ) : (

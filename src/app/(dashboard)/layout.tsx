@@ -12,7 +12,7 @@ const NAV = [
   { href: "/connections", label: "Connections", icon: Link2 },
   { href: "/campaigns", label: "Campaigns", icon: Megaphone },
   { href: "/leads", label: "Leads", icon: Users },
-  { href: "/templates", label: "Templates", icon: Mail },
+  { href: "/templates", label: "Follow-ups", icon: Mail },
   { href: "/settings", label: "Settings", icon: Settings },
 ];
 
