@@ -16,6 +16,70 @@ async function assertNotDemo(userId: string): Promise<void> {
   if (u?.email === "demo@formly.io") throw new Error("This action is disabled in demo mode.");
 }
 
+// ─── Client lifecycle ─────────────────────────────────────────────────────────
+
+export async function disableClient(clientId: string) {
+  const session = await getRequiredSession();
+  await assertNotDemo(session.user.id);
+  const accountId = await getAccountId(session.user.id);
+
+  const metaConns = await db.metaConnection.findMany({
+    where: { groupId: clientId, accountId },
+    select: { id: true },
+  });
+
+  await Promise.all([
+    db.client.updateMany({ where: { id: clientId, accountId }, data: { status: "DISABLED" } }),
+    metaConns.length > 0
+      ? db.campaign.updateMany({
+          where: { metaConnectionId: { in: metaConns.map((c) => c.id) }, status: "ACTIVE" },
+          data: { status: "PAUSED" },
+        })
+      : Promise.resolve(),
+  ]);
+
+  revalidatePath("/connections");
+}
+
+export async function enableClient(clientId: string) {
+  const session = await getRequiredSession();
+  await assertNotDemo(session.user.id);
+  const accountId = await getAccountId(session.user.id);
+
+  await db.client.updateMany({ where: { id: clientId, accountId }, data: { status: "ACTIVE" } });
+  revalidatePath("/connections");
+}
+
+// ─── Connection removal (disconnect + unlink from client) ─────────────────────
+
+export async function removeMetaFromClient(connectionId: string) {
+  const session = await getRequiredSession();
+  await assertNotDemo(session.user.id);
+  const accountId = await getAccountId(session.user.id);
+
+  await db.metaConnection.updateMany({
+    where: { id: connectionId, accountId },
+    data: { status: "DISCONNECTED", groupId: null },
+  });
+
+  revalidatePath("/connections");
+}
+
+export async function removeSTFromClient(connectionId: string) {
+  const session = await getRequiredSession();
+  await assertNotDemo(session.user.id);
+  const accountId = await getAccountId(session.user.id);
+
+  await db.sTConnection.updateMany({
+    where: { id: connectionId, accountId },
+    data: { status: "DISCONNECTED", groupId: null },
+  });
+
+  revalidatePath("/connections");
+}
+
+// ─── Disconnect ───────────────────────────────────────────────────────────────
+
 export async function disconnectMeta(connectionId: string) {
   const session = await getRequiredSession();
   await assertNotDemo(session.user.id);

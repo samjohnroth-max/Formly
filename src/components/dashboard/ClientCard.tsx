@@ -1,14 +1,19 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useRef, useEffect } from "react";
 import { formatDistanceToNow } from "date-fns";
 import {
   CheckCircle, Clock, AlertCircle, XCircle,
-  Zap, Unlink, RefreshCw, Loader2, Pencil, Check, X, Trash2, ExternalLink, Plus, Palette,
+  Zap, Unlink, RefreshCw, Loader2, Pencil, Check, X,
+  ExternalLink, Plus, Palette, MoreVertical, AlertTriangle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { AddSTModal } from "./AddSTModal";
-import { disconnectMeta, disconnectST, testSTConnection } from "@/actions/connections";
+import {
+  disconnectMeta, disconnectST, testSTConnection,
+  disableClient, enableClient,
+  removeMetaFromClient, removeSTFromClient,
+} from "@/actions/connections";
 import type { ConnectionStatus } from "@/types/db";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -37,6 +42,7 @@ export interface STConnSummary {
 export interface ClientData {
   id: string;
   name: string;
+  status: "ACTIVE" | "DISABLED";
   createdAt: Date | string;
   metaConnections: MetaConnSummary[];
   stConnections: STConnSummary[];
@@ -92,6 +98,7 @@ function MetaSlot({
   const [datasetInput, setDatasetInput] = useState(conn.datasetId ?? "");
   const [savingPixel, setSavingPixel] = useState(false);
   const [pixelError, setPixelError] = useState<string | null>(null);
+  const [confirmRemove, setConfirmRemove] = useState(false);
   const [isPending, startTransition] = useTransition();
 
   const capiActive = !!conn.pixelId;
@@ -146,10 +153,7 @@ function MetaSlot({
             </span>
           )}
           {capiActive && !showEditCapi && (
-            <button
-              onClick={() => setShowEditCapi(true)}
-              className="text-xs text-gray-400 hover:text-gray-600"
-            >
+            <button onClick={() => setShowEditCapi(true)} className="text-xs text-gray-400 hover:text-gray-600">
               Edit
             </button>
           )}
@@ -158,9 +162,7 @@ function MetaSlot({
         {capiActive && !showEditCapi && (
           <div className="mt-1.5 space-y-0.5 text-xs text-gray-500">
             <p>Pixel: <span className="font-mono text-gray-700">{conn.pixelId}</span></p>
-            {conn.datasetId && (
-              <p>Dataset: <span className="font-mono text-gray-700">{conn.datasetId}</span></p>
-            )}
+            {conn.datasetId && <p>Dataset: <span className="font-mono text-gray-700">{conn.datasetId}</span></p>}
           </div>
         )}
 
@@ -193,11 +195,7 @@ function MetaSlot({
               </button>
               {capiActive && (
                 <button
-                  onClick={() => {
-                    setShowEditCapi(false);
-                    setPixelInput(conn.pixelId ?? "");
-                    setDatasetInput(conn.datasetId ?? "");
-                  }}
+                  onClick={() => { setShowEditCapi(false); setPixelInput(conn.pixelId ?? ""); setDatasetInput(conn.datasetId ?? ""); }}
                   className="rounded px-2 py-1 text-xs text-gray-500 hover:bg-gray-100"
                 >
                   Cancel
@@ -229,6 +227,28 @@ function MetaSlot({
             Disconnect
           </button>
         )}
+        {!confirmRemove ? (
+          <button
+            onClick={() => setConfirmRemove(true)}
+            className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs text-red-500 hover:bg-red-50"
+          >
+            <X className="size-3" /> Remove
+          </button>
+        ) : (
+          <span className="flex items-center gap-1.5 text-xs">
+            <span className="text-gray-600">Remove connection?</span>
+            <button
+              onClick={() => startTransition(async () => { await removeMetaFromClient(conn.id); onRefresh(); })}
+              disabled={isPending}
+              className="rounded bg-red-500 px-2 py-0.5 text-white hover:bg-red-600 disabled:opacity-50"
+            >
+              Yes
+            </button>
+            <button onClick={() => setConfirmRemove(false)} className="rounded px-2 py-0.5 text-gray-500 hover:bg-gray-100">
+              Cancel
+            </button>
+          </span>
+        )}
       </div>
     </div>
   );
@@ -249,6 +269,7 @@ function STSlot({
 }) {
   const [isPending, startTransition] = useTransition();
   const [testResult, setTestResult] = useState<{ ok: boolean; error?: string } | null>(null);
+  const [confirmRemove, setConfirmRemove] = useState(false);
   const isInactive = conn.status !== "ACTIVE";
 
   function handleTest() {
@@ -314,6 +335,28 @@ function STSlot({
             Disconnect
           </button>
         )}
+        {!confirmRemove ? (
+          <button
+            onClick={() => setConfirmRemove(true)}
+            className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs text-red-500 hover:bg-red-50"
+          >
+            <X className="size-3" /> Remove
+          </button>
+        ) : (
+          <span className="flex items-center gap-1.5 text-xs">
+            <span className="text-gray-600">Remove connection?</span>
+            <button
+              onClick={() => startTransition(async () => { await removeSTFromClient(conn.id); onRefresh(); })}
+              disabled={isPending}
+              className="rounded bg-red-500 px-2 py-0.5 text-white hover:bg-red-600 disabled:opacity-50"
+            >
+              Yes
+            </button>
+            <button onClick={() => setConfirmRemove(false)} className="rounded px-2 py-0.5 text-gray-500 hover:bg-gray-100">
+              Cancel
+            </button>
+          </span>
+        )}
       </div>
     </div>
   );
@@ -326,9 +369,24 @@ export function ClientCard({ client, onRefresh, isNew = false }: ClientCardProps
   const [nameInput, setNameInput] = useState(client.name);
   const [savingName, setSavingName] = useState(false);
   const [showSTModal, setShowSTModal] = useState(false);
-  const [confirmDelete, setConfirmDelete] = useState(false);
-  const [deleting, setDeleting] = useState(false);
   const [reconnectST, setReconnectST] = useState<STConnSummary | null>(null);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  // Remove dialog state
+  const [removeDialog, setRemoveDialog] = useState<"idle" | "open" | "processing">("idle");
+  const [removeInput, setRemoveInput] = useState("");
+
+  const isDisabled = client.status === "DISABLED";
+
+  // Close menu on outside click
+  useEffect(() => {
+    function handler(e: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) setMenuOpen(false);
+    }
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
 
   async function saveName() {
     const trimmed = nameInput.trim();
@@ -344,28 +402,37 @@ export function ClientCard({ client, onRefresh, isNew = false }: ClientCardProps
     onRefresh();
   }
 
-  async function deleteClient() {
-    setDeleting(true);
+  async function handleDisable() {
+    setMenuOpen(false);
+    await disableClient(client.id);
+    onRefresh();
+  }
+
+  async function handleEnable() {
+    setMenuOpen(false);
+    await enableClient(client.id);
+    onRefresh();
+  }
+
+  async function handleRemoveConfirm() {
+    if (removeInput !== client.name) return;
+    setRemoveDialog("processing");
     await fetch(`/api/clients/${client.id}`, { method: "DELETE" });
-    setDeleting(false);
-    setConfirmDelete(false);
+    setRemoveDialog("idle");
     onRefresh();
   }
 
   function handleSTReconnect(conn: STConnSummary) {
-    if (conn.status === "DISCONNECTED") {
-      setShowSTModal(true);
-    } else {
-      setReconnectST(conn);
-      setShowSTModal(true);
-    }
+    setReconnectST(conn);
+    setShowSTModal(true);
   }
 
   return (
     <>
       <div className={cn(
         "overflow-hidden rounded-xl border bg-gray-50 shadow-sm transition-shadow",
-        isNew ? "border-[#0F4C8F] ring-2 ring-[#0F4C8F]/20" : "border-gray-200"
+        isNew ? "border-[#0F4C8F] ring-2 ring-[#0F4C8F]/20" : "border-gray-200",
+        isDisabled && "opacity-60"
       )}>
         {/* Card header */}
         <div className="flex items-center justify-between border-b border-gray-200 bg-white px-5 py-3">
@@ -375,7 +442,10 @@ export function ClientCard({ client, onRefresh, isNew = false }: ClientCardProps
                 type="text"
                 value={nameInput}
                 onChange={(e) => setNameInput(e.target.value)}
-                onKeyDown={(e) => { if (e.key === "Enter") saveName(); if (e.key === "Escape") { setEditingName(false); setNameInput(client.name); } }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") saveName();
+                  if (e.key === "Escape") { setEditingName(false); setNameInput(client.name); }
+                }}
                 autoFocus
                 className="rounded-md border border-[#0F4C8F]/40 px-2 py-1 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-[#0F4C8F]"
               />
@@ -389,46 +459,76 @@ export function ClientCard({ client, onRefresh, isNew = false }: ClientCardProps
           ) : (
             <div className="flex items-center gap-2">
               <h3 className="text-sm font-semibold text-gray-900">{client.name}</h3>
-              <button onClick={() => setEditingName(true)} className="rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600">
-                <Pencil className="size-3.5" />
-              </button>
+              {isDisabled && (
+                <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-500">
+                  Disabled
+                </span>
+              )}
             </div>
           )}
 
-          {!confirmDelete ? (
-            <div className="flex items-center gap-1.5">
-              <a
-                href={`/settings/brand?client=${client.id}`}
-                className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs text-gray-500 hover:bg-gray-100 hover:text-gray-700"
-                title="Brand settings"
-              >
-                <Palette className="size-3.5" />
-                Brand
-              </a>
+          <div className="flex items-center gap-1.5">
+            <a
+              href={`/settings/brand?client=${client.id}`}
+              className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs text-gray-500 hover:bg-gray-100 hover:text-gray-700"
+              title="Brand settings"
+            >
+              <Palette className="size-3.5" />
+              Brand
+            </a>
+
+            {/* Three-dot menu */}
+            <div className="relative" ref={menuRef}>
               <button
-                onClick={() => setConfirmDelete(true)}
-                className="rounded-md p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-500"
-                title="Remove client"
+                onClick={() => setMenuOpen((v) => !v)}
+                className="rounded-md p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+                title="Client options"
               >
-                <Trash2 className="size-4" />
+                <MoreVertical className="size-4" />
               </button>
+
+              {menuOpen && (
+                <div className="absolute right-0 top-full z-20 mt-1 w-44 overflow-hidden rounded-lg border border-gray-200 bg-white shadow-lg">
+                  <button
+                    onClick={() => { setMenuOpen(false); setEditingName(true); setNameInput(client.name); }}
+                    className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50"
+                  >
+                    <Pencil className="size-3.5 text-gray-400" /> Rename
+                  </button>
+                  {isDisabled ? (
+                    <button
+                      onClick={handleEnable}
+                      className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-green-700 hover:bg-green-50"
+                    >
+                      <Check className="size-3.5 text-green-500" /> Re-enable
+                    </button>
+                  ) : (
+                    <button
+                      onClick={handleDisable}
+                      className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-amber-700 hover:bg-amber-50"
+                    >
+                      <XCircle className="size-3.5 text-amber-500" /> Disable client
+                    </button>
+                  )}
+                  <div className="border-t border-gray-100" />
+                  <button
+                    onClick={() => { setMenuOpen(false); setRemoveInput(""); setRemoveDialog("open"); }}
+                    className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50"
+                  >
+                    <AlertTriangle className="size-3.5 text-red-500" /> Remove client
+                  </button>
+                </div>
+              )}
             </div>
-          ) : (
-            <div className="flex items-center gap-2 text-sm">
-              <span className="text-gray-600">Remove client?</span>
-              <button
-                onClick={deleteClient}
-                disabled={deleting}
-                className="rounded-md bg-red-500 px-2.5 py-1 text-xs font-medium text-white hover:bg-red-600 disabled:opacity-50"
-              >
-                {deleting ? "Removing…" : "Yes, remove"}
-              </button>
-              <button onClick={() => setConfirmDelete(false)} className="rounded-md px-2.5 py-1 text-xs text-gray-600 hover:bg-gray-100">
-                Cancel
-              </button>
-            </div>
-          )}
+          </div>
         </div>
+
+        {/* Disabled notice */}
+        {isDisabled && (
+          <div className="border-b border-amber-200 bg-amber-50 px-5 py-2 text-xs text-amber-800">
+            This client is disabled — their campaigns are paused and no new leads will be routed.
+          </div>
+        )}
 
         {/* Two-column body */}
         <div className="grid grid-cols-1 gap-4 p-4 sm:grid-cols-2">
@@ -507,6 +607,59 @@ export function ClientCard({ client, onRefresh, isNew = false }: ClientCardProps
           </div>
         </div>
       </div>
+
+      {/* Remove client dialog */}
+      {removeDialog !== "idle" && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-md rounded-xl bg-white shadow-xl">
+            <div className="p-6">
+              <div className="mb-4 flex items-start gap-3">
+                <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-red-100">
+                  <AlertTriangle className="size-5 text-red-600" />
+                </div>
+                <div>
+                  <h2 className="text-base font-semibold text-gray-900">Remove {client.name}</h2>
+                  <p className="mt-1 text-sm text-gray-500">
+                    This will permanently archive all campaigns for <strong>{client.name}</strong> and unlink
+                    their Meta and ServiceTitan connections. Lead history will be preserved. This cannot be undone.
+                  </p>
+                </div>
+              </div>
+
+              <div className="mb-4">
+                <label className="mb-1.5 block text-sm font-medium text-gray-700">
+                  Type <strong>{client.name}</strong> to confirm
+                </label>
+                <input
+                  type="text"
+                  value={removeInput}
+                  onChange={(e) => setRemoveInput(e.target.value)}
+                  placeholder={client.name}
+                  autoFocus
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-red-400 focus:outline-none focus:ring-1 focus:ring-red-400"
+                />
+              </div>
+
+              <div className="flex gap-3">
+                <button
+                  onClick={() => { setRemoveDialog("idle"); setRemoveInput(""); }}
+                  disabled={removeDialog === "processing"}
+                  className="flex-1 rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleRemoveConfirm}
+                  disabled={removeInput !== client.name || removeDialog === "processing"}
+                  className="flex-1 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-40"
+                >
+                  {removeDialog === "processing" ? "Removing…" : "Remove client"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {showSTModal && (
         <AddSTModal

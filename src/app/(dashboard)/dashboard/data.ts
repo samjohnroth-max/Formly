@@ -352,7 +352,7 @@ export async function fetchOutOfAreaMetrics(
 
 export async function fetchClientList(accountId: string): Promise<ClientOption[]> {
   return db.client.findMany({
-    where: { accountId },
+    where: { accountId, status: "ACTIVE" },
     select: { id: true, name: true },
     orderBy: { name: "asc" },
   });

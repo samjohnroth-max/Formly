@@ -111,17 +111,23 @@ model Account {
   @@map("orgs")
 }
 
+enum ClientStatus {
+  ACTIVE
+  DISABLED
+}
+
 // ─── Client ───────────────────────────────────────────────────────────────────
 // Agency grouping model — one row per end-client. MetaConnection and STConnection
 // are linked here so a single card shows the full picture for each client.
 
 model Client {
-  id        String   @id @default(cuid())
+  id        String       @id @default(cuid())
   accountId String
-  account   Account  @relation(fields: [accountId], references: [id])
+  account   Account      @relation(fields: [accountId], references: [id])
   name      String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  status    ClientStatus @default(ACTIVE)
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
 
   metaConnections MetaConnection[]
   stConnections   STConnection[]

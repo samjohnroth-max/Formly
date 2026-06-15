@@ -39,6 +39,7 @@ export async function GET() {
       select: {
         id: true,
         name: true,
+        status: true,
         createdAt: true,
         metaConnections: {
           select: { id: true, metaAccountName: true, pixelId: true, datasetId: true, status: true, createdAt: true, _count: { select: { campaigns: true } } },
@@ -99,6 +100,7 @@ export async function GET() {
     clients: clients.map((cl) => ({
       id: cl.id,
       name: cl.name,
+      status: cl.status,
       createdAt: cl.createdAt,
       metaConnections: cl.metaConnections.map(mapMeta),
       stConnections: cl.stConnections.map(mapST),

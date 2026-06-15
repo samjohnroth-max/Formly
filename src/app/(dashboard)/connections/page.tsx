@@ -22,6 +22,7 @@ export default function ConnectionsPage() {
   const [showAddST, setShowAddST] = useState(false);
   const [flash, setFlash] = useState<{ type: "success" | "error"; message: string } | null>(null);
   const [newClientId, setNewClientId] = useState<string | null>(null);
+  const [showDisabled, setShowDisabled] = useState(false);
 
   useEffect(() => {
     if (!newClientId) return;
@@ -56,13 +57,26 @@ export default function ConnectionsPage() {
             One card per client — each showing their Meta and ServiceTitan connections.
           </p>
         </div>
-        <button
-          onClick={() => setShowAddClient(true)}
-          className="inline-flex items-center gap-2 rounded-md bg-[#0F4C8F] px-4 py-2 text-sm font-medium text-white hover:bg-[#0D3F7A]"
-        >
-          <Plus className="size-4" />
-          Add Client
-        </button>
+        <div className="flex items-center gap-3">
+          {data && data.clients.some((c) => c.status === "DISABLED") && (
+            <label className="flex cursor-pointer items-center gap-2 text-sm text-gray-500 dark:text-[#8B90A0]">
+              <div
+                onClick={() => setShowDisabled((v) => !v)}
+                className={`relative h-5 w-9 rounded-full transition-colors ${showDisabled ? "bg-[#0F4C8F]" : "bg-gray-300 dark:bg-[#2A2D3E]"}`}
+              >
+                <span className={`absolute top-0.5 left-0.5 size-4 rounded-full bg-white shadow transition-transform ${showDisabled ? "translate-x-4" : ""}`} />
+              </div>
+              Show disabled
+            </label>
+          )}
+          <button
+            onClick={() => setShowAddClient(true)}
+            className="inline-flex items-center gap-2 rounded-md bg-[#0F4C8F] px-4 py-2 text-sm font-medium text-white hover:bg-[#0D3F7A]"
+          >
+            <Plus className="size-4" />
+            Add Client
+          </button>
+        </div>
       </div>
 
       {/* Flash */}
@@ -83,9 +97,11 @@ export default function ConnectionsPage() {
         <EmptyState onAdd={() => setShowAddClient(true)} />
       ) : (
         <div className="space-y-4">
-          {data.clients.map((client) => (
-            <ClientCard key={client.id} client={client} onRefresh={loadData} isNew={client.id === newClientId} />
-          ))}
+          {data.clients
+            .filter((c) => showDisabled || c.status !== "DISABLED")
+            .map((client) => (
+              <ClientCard key={client.id} client={client} onRefresh={loadData} isNew={client.id === newClientId} />
+            ))}
         </div>
       )}
 
@@ -261,7 +277,7 @@ function AssignDropdown({
 
       {open && (
         <div className="absolute right-0 z-20 mt-1 min-w-[190px] overflow-hidden rounded-lg border border-gray-200 dark:border-[#2A2D3E] bg-white dark:bg-[#1A1D27] shadow-lg">
-          {clients.map((c) => (
+          {clients.filter((c) => c.status !== "DISABLED").map((c) => (
             <button
               key={c.id}
               onClick={() => assign(c.id)}
