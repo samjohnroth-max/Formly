@@ -293,7 +293,7 @@ export function CampaignPerformanceTable({ rows, periodKey, rangeLabel, isDemo }
       {/* Table */}
       <div className="overflow-hidden rounded-xl border border-gray-200 dark:border-[#2A2D3E] bg-white dark:bg-[#1A1D27] shadow-sm">
         <div className="overflow-x-auto">
-          <table className="w-full text-sm min-w-[860px]">
+          <table className="w-full text-sm min-w-[1000px]">
             <thead>
               <tr className="border-b border-gray-100 dark:border-[#2A2D3E] bg-gray-50 dark:bg-white/5">
                 <Th col="name" label="Campaign" />
@@ -319,8 +319,11 @@ export function CampaignPerformanceTable({ rows, periodKey, rangeLabel, isDemo }
                   right
                   tooltip="Return on Ad Spend = Revenue ÷ Ad Spend. A 3x ROAS means $3 in revenue for every $1 spent. Calculated from actual invoice values in ServiceTitan."
                 />
-                <th className="py-3 pl-3 pr-5 text-right text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-[#8B90A0]">
+                <th className="py-3 pl-3 pr-3 text-right text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-[#8B90A0]">
                   CAPI signals
+                </th>
+                <th className="py-3 pl-3 pr-5 text-right text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-[#8B90A0]">
+                  Email
                 </th>
               </tr>
             </thead>
@@ -410,7 +413,7 @@ export function CampaignPerformanceTable({ rows, periodKey, rangeLabel, isDemo }
                       <span className={roasClass(r.roas)}>{fmtRoas(r.roas)}</span>
                     </td>
                     {/* CAPI mini funnel: L · S · P */}
-                    <td className="py-3 pl-3 pr-5 text-right">
+                    <td className="py-3 pl-3 pr-3 text-right">
                       <div className="text-[11px] tabular-nums">
                         <span className="text-blue-600 dark:text-blue-400 font-medium">L {r.leadEvents}</span>
                         <span className="text-gray-300 dark:text-[#2A2D3E]"> · </span>
@@ -418,6 +421,30 @@ export function CampaignPerformanceTable({ rows, periodKey, rangeLabel, isDemo }
                         <span className="text-gray-300 dark:text-[#2A2D3E]"> · </span>
                         <span className="text-emerald-600 dark:text-emerald-400">P {r.purchaseEvents}</span>
                       </div>
+                    </td>
+                    {/* Email stats */}
+                    <td className="py-3 pl-3 pr-5 text-right">
+                      {r.emailsSent > 0 ? (
+                        <div className="text-[11px] tabular-nums space-y-0.5">
+                          <div>
+                            <span className="text-gray-400 dark:text-[#8B90A0]">Sent </span>
+                            <span className="text-gray-700 dark:text-[#F0F4FF] font-medium">{r.emailsSent}</span>
+                          </div>
+                          <div>
+                            <span className="text-gray-400 dark:text-[#8B90A0]">Open </span>
+                            <span className={r.emailOpenRate !== null && r.emailOpenRate >= 30 ? "text-emerald-600 dark:text-emerald-400 font-medium" : "text-amber-600 dark:text-amber-400"}>
+                              {r.emailOpenRate !== null ? `${r.emailOpenRate}%` : "—"}
+                            </span>
+                            <span className="text-gray-300 dark:text-[#2A2D3E]"> · </span>
+                            <span className="text-gray-400 dark:text-[#8B90A0]">Click </span>
+                            <span className="text-purple-600 dark:text-purple-400 font-medium">
+                              {r.emailClickRate !== null ? `${r.emailClickRate}%` : "—"}
+                            </span>
+                          </div>
+                        </div>
+                      ) : (
+                        <span className="text-[11px] text-gray-300 dark:text-[#2A2D3E]">—</span>
+                      )}
                     </td>
                   </tr>
                 );
@@ -439,7 +466,7 @@ export function CampaignPerformanceTable({ rows, periodKey, rangeLabel, isDemo }
                 <td className="px-3 py-3 text-right tabular-nums">
                   <span className={roasClass(blendedRoas)}>{fmtRoas(blendedRoas)}</span>
                 </td>
-                <td className="py-3 pl-3 pr-5 text-right">
+                <td className="py-3 pl-3 pr-3 text-right">
                   <div className="text-[11px] tabular-nums">
                     <span className="text-blue-600 dark:text-blue-400 font-medium">L {totalLeadEvents}</span>
                     <span className="text-gray-300 dark:text-[#2A2D3E]"> · </span>
@@ -448,6 +475,44 @@ export function CampaignPerformanceTable({ rows, periodKey, rangeLabel, isDemo }
                     <span className="text-emerald-600 dark:text-emerald-400">P {totalPurchaseEvents}</span>
                   </div>
                 </td>
+                {(() => {
+                  const totalEmailsSent = displayRows.reduce((s, r) => s + r.emailsSent, 0);
+                  const totalEmailsOpened = displayRows.reduce(
+                    (s, r) => s + (r.emailOpenRate !== null ? Math.round((r.emailOpenRate / 100) * r.emailsSent) : 0),
+                    0
+                  );
+                  const totalEmailsClicked = displayRows.reduce(
+                    (s, r) => s + (r.emailClickRate !== null ? Math.round((r.emailClickRate / 100) * r.emailsSent) : 0),
+                    0
+                  );
+                  const blendedOpenRate = totalEmailsSent > 0 ? Math.round((totalEmailsOpened / totalEmailsSent) * 100) : null;
+                  const blendedClickRate = totalEmailsSent > 0 ? Math.round((totalEmailsClicked / totalEmailsSent) * 100) : null;
+                  return (
+                    <td className="py-3 pl-3 pr-5 text-right">
+                      {totalEmailsSent > 0 ? (
+                        <div className="text-[11px] tabular-nums space-y-0.5">
+                          <div>
+                            <span className="text-gray-400 dark:text-[#8B90A0]">Sent </span>
+                            <span className="text-gray-900 dark:text-[#F0F4FF] font-bold">{totalEmailsSent}</span>
+                          </div>
+                          <div>
+                            <span className="text-gray-400 dark:text-[#8B90A0]">Open </span>
+                            <span className="font-medium text-emerald-600 dark:text-emerald-400">
+                              {blendedOpenRate !== null ? `${blendedOpenRate}%` : "—"}
+                            </span>
+                            <span className="text-gray-300 dark:text-[#2A2D3E]"> · </span>
+                            <span className="text-gray-400 dark:text-[#8B90A0]">Click </span>
+                            <span className="font-medium text-purple-600 dark:text-purple-400">
+                              {blendedClickRate !== null ? `${blendedClickRate}%` : "—"}
+                            </span>
+                          </div>
+                        </div>
+                      ) : (
+                        <span className="text-[11px] text-gray-300 dark:text-[#2A2D3E]">—</span>
+                      )}
+                    </td>
+                  );
+                })()}
               </tr>
             </tbody>
           </table>

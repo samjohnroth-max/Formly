@@ -1,5 +1,6 @@
 import { Resend } from "resend";
 import { db } from "@/lib/db";
+import { signTrackingToken } from "@/lib/tracking/token";
 import type { ProcessingContext } from "../types";
 
 const MERGE_TAG_RE = /\{\{(\w+)\}\}/g;
@@ -11,6 +12,28 @@ function renderTemplate(
   return template.replace(MERGE_TAG_RE, (_, key) => vars[key] ?? "");
 }
 
+function appBaseUrl(): string {
+  return (process.env.NEXTAUTH_URL ?? "https://formlyleads.com").replace(/\/$/, "");
+}
+
+function injectTrackingPixel(html: string, pixelUrl: string): string {
+  const pixel = `<img src="${pixelUrl}" width="1" height="1" style="display:none;" alt="" />`;
+  if (html.includes("</body>")) {
+    return html.replace("</body>", `${pixel}</body>`);
+  }
+  return html + pixel;
+}
+
+function wrapLinks(html: string, clickToken: string, base: string): string {
+  return html.replace(/href="([^"]+)"/g, (match, url: string) => {
+    if (url === "#" || url.startsWith("mailto:") || url.startsWith("tel:")) {
+      return match;
+    }
+    const trackUrl = `${base}/api/track/click?token=${clickToken}&url=${encodeURIComponent(url)}`;
+    return `href="${trackUrl}"`;
+  });
+}
+
 /**
  * Sends a confirmation email to the lead using the campaign's email template.
  * Non-blocking: failure updates emailStatus=FAILED but does not throw.
@@ -18,7 +41,7 @@ function renderTemplate(
 export async function sendEmail(ctx: ProcessingContext): Promise<void> {
   const { campaign, leadId } = ctx;
   if (!campaign || !leadId) return;
-  if (!campaign.emailTemplate) return; // No template configured — skip
+  if (!campaign.emailTemplate) return;
   if (!ctx.email) {
     await db.lead.update({ where: { id: leadId }, data: { emailStatus: "SKIPPED" } });
     return;
@@ -56,6 +79,19 @@ export async function sendEmail(ctx: ProcessingContext): Promise<void> {
     replyTo = owner?.email ?? undefined;
   }
 
+  // Build tracking token
+  const trackingToken = signTrackingToken({
+    leadId,
+    templateId: campaign.emailTemplate.id,
+    accountId: campaign.accountId,
+  });
+  const base = appBaseUrl();
+  const pixelUrl = `${base}/api/track/open?token=${trackingToken}`;
+
+  let html = renderTemplate(campaign.emailTemplate.body, vars);
+  html = wrapLinks(html, trackingToken, base);
+  html = injectTrackingPixel(html, pixelUrl);
+
   try {
     const resend = new Resend(process.env.AUTH_RESEND_KEY);
     const { error } = await resend.emails.send({
@@ -63,15 +99,25 @@ export async function sendEmail(ctx: ProcessingContext): Promise<void> {
       to: ctx.email,
       replyTo,
       subject: renderTemplate(campaign.emailTemplate.subject, vars),
-      html: renderTemplate(campaign.emailTemplate.body, vars),
+      html,
     });
 
     if (error) throw new Error(error.message);
 
-    await db.lead.update({
-      where: { id: leadId },
-      data: { emailStatus: "SENT", emailSentAt: new Date() },
-    });
+    await Promise.all([
+      db.lead.update({
+        where: { id: leadId },
+        data: { emailStatus: "SENT", emailSentAt: new Date() },
+      }),
+      db.emailEvent.create({
+        data: {
+          accountId: campaign.accountId,
+          leadId,
+          templateId: campaign.emailTemplate.id,
+          eventType: "SENT",
+        },
+      }),
+    ]);
   } catch (err) {
     const message = err instanceof Error ? err.message : "Email send failed";
     console.error(`[sendEmail] lead ${leadId}:`, message);

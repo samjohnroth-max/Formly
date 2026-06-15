@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { ChevronLeft, ExternalLink, AlertTriangle, MapPin } from "lucide-react";
+import { ChevronLeft, ExternalLink, AlertTriangle, MapPin, Mail, MousePointer, Eye, Calendar } from "lucide-react";
 import { formatDistanceToNow, format } from "date-fns";
 import { getRequiredSession } from "@/lib/auth/session";
 import { db } from "@/lib/db";
@@ -36,6 +36,7 @@ export default async function LeadDetailPage({
         },
       },
       capiEvents: { orderBy: { createdAt: "asc" } },
+      emailEvents: { orderBy: { createdAt: "asc" } },
     },
     // formData is a Json field — Prisma includes it automatically
   });
@@ -176,6 +177,79 @@ export default async function LeadDetailPage({
                   ))}
                 </tbody>
               </table>
+            </Panel>
+          )}
+
+          {/* Email activity */}
+          {lead.emailStatus !== "PENDING" && lead.emailStatus !== "SKIPPED" && (
+            <Panel title="Email activity">
+              <div className="space-y-3">
+                {/* Sent row */}
+                <div className="flex items-center gap-3 text-sm">
+                  <Mail className="size-4 shrink-0 text-blue-500" />
+                  <span className="text-gray-700">
+                    Sent{" "}
+                    {lead.emailSentAt
+                      ? format(lead.emailSentAt, "MMM d, yyyy 'at' h:mm a")
+                      : "—"}
+                  </span>
+                  <span className={`ml-auto text-xs font-medium px-2 py-0.5 rounded-full ${
+                    lead.emailStatus === "SENT"
+                      ? "bg-emerald-50 text-emerald-700"
+                      : "bg-red-50 text-red-600"
+                  }`}>
+                    {lead.emailStatus}
+                  </span>
+                </div>
+
+                {/* Opened row */}
+                {(() => {
+                  const openedEvent = lead.emailEvents.find(
+                    (e: { eventType: string; createdAt: Date }) => e.eventType === "OPENED"
+                  );
+                  return (
+                    <div className="flex items-center gap-3 text-sm">
+                      <Eye className="size-4 shrink-0 text-amber-500" />
+                      {openedEvent ? (
+                        <span className="text-gray-700">
+                          Opened {format(openedEvent.createdAt, "MMM d, yyyy 'at' h:mm a")}
+                        </span>
+                      ) : (
+                        <span className="text-gray-400">Not opened yet</span>
+                      )}
+                    </div>
+                  );
+                })()}
+
+                {/* Click rows */}
+                {lead.emailEvents
+                  .filter((e: { eventType: string }) =>
+                    e.eventType === "CLICKED" || e.eventType === "BOOKING_CLICKED"
+                  )
+                  .map((e: { id: string; eventType: string; createdAt: Date; metadata: unknown }) => {
+                    const meta = e.metadata as { url?: string } | null;
+                    return (
+                      <div key={e.id} className="flex items-start gap-3 text-sm">
+                        {e.eventType === "BOOKING_CLICKED" ? (
+                          <Calendar className="size-4 shrink-0 mt-0.5 text-emerald-500" />
+                        ) : (
+                          <MousePointer className="size-4 shrink-0 mt-0.5 text-purple-500" />
+                        )}
+                        <div className="min-w-0">
+                          <p className="text-gray-700">
+                            {e.eventType === "BOOKING_CLICKED" ? "Booking link clicked" : "Link clicked"}{" "}
+                            <span className="text-gray-400">
+                              {format(e.createdAt, "MMM d 'at' h:mm a")}
+                            </span>
+                          </p>
+                          {meta?.url && (
+                            <p className="truncate text-xs text-gray-400 mt-0.5">{meta.url}</p>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+              </div>
             </Panel>
           )}
 

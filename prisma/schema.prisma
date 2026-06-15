@@ -76,6 +76,15 @@ enum CAPIStatus {
   SKIPPED
 }
 
+enum EmailEventType {
+  SENT
+  OPENED
+  CLICKED
+  BOOKING_CLICKED
+  BOUNCED
+  UNSUBSCRIBED
+}
+
 enum SupportTicketStatus {
   OPEN
   IN_PROGRESS
@@ -107,6 +116,7 @@ model Account {
   brandSettings   BrandSettings[]
   serviceArea     ServiceArea?
   supportTickets  SupportTicket[]
+  emailEvents     EmailEvent[]
 
   @@map("orgs")
 }
@@ -364,7 +374,8 @@ model Lead {
   createdAt         DateTime      @default(now())
   updatedAt         DateTime      @updatedAt
 
-  capiEvents CAPIEvent[]
+  capiEvents   CAPIEvent[]
+  emailEvents  EmailEvent[]
 
   @@index([accountId, createdAt(sort: Desc)]) // leads list: ordered by date per account
   @@index([accountId, routingStatus])          // metrics, status filters
@@ -395,6 +406,26 @@ model CAPIEvent {
   @@index([leadId])
 }
 
+// ─── EmailEvent ───────────────────────────────────────────────────────────────
+// Tracks open/click engagement for outgoing emails.
+
+model EmailEvent {
+  id         String         @id @default(cuid())
+  accountId  String
+  account    Account        @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  leadId     String
+  lead       Lead           @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  templateId String?
+  template   EmailTemplate? @relation(fields: [templateId], references: [id], onDelete: SetNull)
+  eventType  EmailEventType
+  metadata   Json?
+  createdAt  DateTime       @default(now())
+
+  @@index([leadId])
+  @@index([templateId])
+  @@index([accountId, createdAt(sort: Desc)])
+}
+
 // ─── EmailTemplate ────────────────────────────────────────────────────────────
 // Reusable email templates with merge tag support. Scoped to account.
 
@@ -413,6 +444,7 @@ model EmailTemplate {
 
   campaigns      Campaign[]
   sequenceSteps  CampaignEmailSequence[]
+  emailEvents    EmailEvent[]
 
   @@unique([accountId, name])
 }

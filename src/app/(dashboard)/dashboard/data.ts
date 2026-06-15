@@ -53,6 +53,11 @@ export interface CampaignPerfRow {
   leadTrend: number[];
   revenueTrend: number[];
   dailyLeads: Array<{ date: string; count: number }>;
+  // Email analytics
+  emailsSent: number;
+  emailOpenRate: number | null;   // 0–100
+  emailClickRate: number | null;  // 0–100
+  emailBookingClicks: number;
 }
 
 export interface AdSpendMonth {
@@ -217,7 +222,7 @@ export async function fetchCampaignPerformance(
   // For ad spend: include any month that overlaps the range (not just months within it)
   const spendMonthStart = new Date(rangeStart.getFullYear(), rangeStart.getMonth(), 1);
 
-  const [campaigns, leadsRange, capiEvents, adSpends] = await Promise.all([
+  const [campaigns, leadsRange, capiEvents, adSpends, emailEventsRange] = await Promise.all([
     db.campaign.findMany({
       where: {
         accountId, status: { not: "ARCHIVED" },
@@ -236,6 +241,10 @@ export async function fetchCampaignPerformance(
     }),
     db.monthlyAdSpend.findMany({
       where: { campaign: { accountId }, month: { gte: spendMonthStart, lte: rangeEnd } },
+    }),
+    db.emailEvent.findMany({
+      where: { accountId, createdAt: rangeFilter },
+      select: { eventType: true, lead: { select: { campaignId: true } } },
     }),
   ]);
 
@@ -257,6 +266,19 @@ export async function fetchCampaignPerformance(
     const scheduleEvents = campaignEvents.filter((e) => e.eventName === "Schedule").length;
     const purchaseEvents = campaignEvents.filter((e) => e.eventName === "Purchase").length;
     const capiEventsSent = campaignEvents.length;
+
+    // Email analytics
+    const campaignEmailEvents = emailEventsRange.filter((e) => e.lead.campaignId === c.id);
+    const emailsSent = campaignEmailEvents.filter((e) => e.eventType === "SENT").length;
+    const emailsOpened = campaignEmailEvents.filter((e) => e.eventType === "OPENED").length;
+    const emailsClicked = campaignEmailEvents.filter(
+      (e) => e.eventType === "CLICKED" || e.eventType === "BOOKING_CLICKED"
+    ).length;
+    const emailBookingClicks = campaignEmailEvents.filter(
+      (e) => e.eventType === "BOOKING_CLICKED"
+    ).length;
+    const emailOpenRate = emailsSent > 0 ? Math.round((emailsOpened / emailsSent) * 100) : null;
+    const emailClickRate = emailsSent > 0 ? Math.round((emailsClicked / emailsSent) * 100) : null;
 
     // Ad spend & ROAS
     const campaignSpends = adSpends.filter((s) => s.campaignId === c.id);
@@ -313,6 +335,10 @@ export async function fetchCampaignPerformance(
       leadTrend,
       revenueTrend,
       dailyLeads,
+      emailsSent,
+      emailOpenRate,
+      emailClickRate,
+      emailBookingClicks,
     };
   });
 }
